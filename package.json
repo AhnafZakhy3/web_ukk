@@ -1,0 +1,13 @@
+{
+  "name": "nusapos",
+  "version": "1.0.0",
+  "description": "NusaPOS Web Application (PHP + Tailwind CSS CLI + MySQL)",
+  "scripts": {
+    "build:css": "npx @tailwindcss/cli -i ./src/input.css -o ./public/css/output.css",
+    "watch:css": "npx @tailwindcss/cli -i ./src/input.css -o ./public/css/output.css --watch"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.3.3",
+    "tailwindcss": "^4.3.3"
+  }
+}
