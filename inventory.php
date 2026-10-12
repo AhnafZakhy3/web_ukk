@@ -550,7 +550,7 @@ require_once __DIR__ . '/templates/topbar.php';
             </button>
         </div>
 
-        <form method="POST" action="api/produk_action.php" class="p-space-lg overflow-y-auto space-y-4">
+        <form method="POST" action="api/produk_action.php" enctype="multipart/form-data" class="p-space-lg overflow-y-auto space-y-4">
             <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
             <input type="hidden" name="action" id="prod-form-action" value="add">
             <input type="hidden" name="id" id="prod-form-id" value="">
@@ -632,11 +632,45 @@ require_once __DIR__ . '/templates/topbar.php';
                         class="w-full px-3.5 py-2.5 rounded-xl bg-surface-container-low font-mono text-xs border border-outline-variant/40 focus:outline-none focus:ring-2 focus:ring-primary">
                 </div>
 
-                <!-- Gambar URL -->
-                <div class="sm:col-span-2">
-                    <label class="block text-xs font-semibold text-on-surface mb-1">URL Gambar Produk (Opsional)</label>
-                    <input type="text" name="gambar" id="input-prod-img" placeholder="https://..."
-                        class="w-full px-3.5 py-2.5 rounded-xl bg-surface-container-low text-xs border border-outline-variant/40 focus:outline-none focus:ring-2 focus:ring-primary">
+                <!-- Foto / Gambar Produk (Upload File & URL) -->
+                <div class="sm:col-span-2 space-y-2">
+                    <label class="block text-xs font-semibold text-on-surface">Foto / Gambar Produk (Opsional)</label>
+                    
+                    <div class="flex flex-col sm:flex-row gap-4 items-start p-3.5 rounded-xl bg-surface-container-low border border-outline-variant/40">
+                        <!-- Preview Box -->
+                        <div class="w-24 h-24 rounded-xl bg-surface-container-high border border-outline-variant/40 flex items-center justify-center overflow-hidden shrink-0 relative">
+                            <img id="prod-img-preview" src="" alt="Pratinjau" class="w-full h-full object-cover hidden">
+                            <div id="prod-img-placeholder" class="flex flex-col items-center justify-center text-on-surface-variant/60">
+                                <span class="material-symbols-outlined text-[30px]">image</span>
+                                <span class="text-[10px] mt-0.5">Tanpa Foto</span>
+                            </div>
+                            <button type="button" id="btn-remove-img" onclick="clearProductImage()" title="Hapus Gambar" class="absolute top-1 right-1 w-6 h-6 rounded-full bg-error text-on-error flex items-center justify-center hidden opacity-90 hover:opacity-100 transition-opacity shadow-sm">
+                                <span class="material-symbols-outlined text-[14px]">close</span>
+                            </button>
+                        </div>
+
+                        <!-- Upload & URL Controls -->
+                        <div class="flex-1 space-y-2.5 w-full">
+                            <!-- File Upload Input -->
+                            <div>
+                                <label class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-highest text-on-surface text-xs font-semibold cursor-pointer border border-outline-variant/50 transition-colors shadow-xs">
+                                    <span class="material-symbols-outlined text-[18px] text-primary">upload_file</span>
+                                    <span>Pilih Berkas Gambar</span>
+                                    <input type="file" name="gambar_file" id="input-prod-file" accept="image/jpeg,image/png,image/webp,image/gif" class="hidden" onchange="previewSelectedFile(this)">
+                                </label>
+                                <span id="file-chosen-text" class="text-[11px] text-on-surface-variant ml-2 truncate inline-block max-w-[200px] align-middle">Belum ada file dipilih</span>
+                                <p class="text-[10px] text-on-surface-variant/70 mt-1">Mendukung format JPG, PNG, WEBP, atau GIF (Maks. 3 MB)</p>
+                            </div>
+
+                            <!-- Or URL Fallback Input -->
+                            <div class="pt-2 border-t border-outline-variant/30">
+                                <label for="input-prod-img" class="block text-[11px] text-on-surface-variant mb-1">Atau tempel URL gambar eksternal:</label>
+                                <input type="text" name="gambar" id="input-prod-img" placeholder="https://..." oninput="previewUrlImage(this.value)"
+                                    class="w-full px-3 py-1.5 rounded-lg bg-surface-container-lowest text-xs border border-outline-variant/40 focus:outline-none focus:ring-2 focus:ring-primary placeholder:text-outline">
+                            </div>
+                        </div>
+                    </div>
+                    <input type="hidden" name="hapus_gambar" id="input-hapus-gambar" value="0">
                 </div>
 
                 <!-- Status Produk -->
@@ -772,6 +806,69 @@ require_once __DIR__ . '/templates/topbar.php';
         document.getElementById('input-prod-sku').value = `SKU-${catText}-${rand}`;
     }
 
+    // Image Preview & Upload Helpers
+    function previewSelectedFile(input) {
+        const preview = document.getElementById('prod-img-preview');
+        const placeholder = document.getElementById('prod-img-placeholder');
+        const removeBtn = document.getElementById('btn-remove-img');
+        const chosenText = document.getElementById('file-chosen-text');
+        const hapusInput = document.getElementById('input-hapus-gambar');
+
+        if (input.files && input.files[0]) {
+            const file = input.files[0];
+            chosenText.textContent = file.name;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                preview.src = e.target.result;
+                preview.classList.remove('hidden');
+                placeholder.classList.add('hidden');
+                removeBtn.classList.remove('hidden');
+            };
+            reader.readAsDataURL(file);
+            hapusInput.value = '0';
+        }
+    }
+
+    function previewUrlImage(url) {
+        const preview = document.getElementById('prod-img-preview');
+        const placeholder = document.getElementById('prod-img-placeholder');
+        const removeBtn = document.getElementById('btn-remove-img');
+        const hapusInput = document.getElementById('input-hapus-gambar');
+
+        const trimmed = (url || '').trim();
+        if (trimmed !== '') {
+            preview.src = trimmed;
+            preview.classList.remove('hidden');
+            placeholder.classList.add('hidden');
+            removeBtn.classList.remove('hidden');
+            hapusInput.value = '0';
+        } else {
+            const fileInput = document.getElementById('input-prod-file');
+            if (!fileInput.files || fileInput.files.length === 0) {
+                clearProductImage();
+            }
+        }
+    }
+
+    function clearProductImage() {
+        const preview = document.getElementById('prod-img-preview');
+        const placeholder = document.getElementById('prod-img-placeholder');
+        const removeBtn = document.getElementById('btn-remove-img');
+        const fileInput = document.getElementById('input-prod-file');
+        const urlInput = document.getElementById('input-prod-img');
+        const chosenText = document.getElementById('file-chosen-text');
+        const hapusInput = document.getElementById('input-hapus-gambar');
+
+        fileInput.value = '';
+        urlInput.value = '';
+        preview.src = '';
+        preview.classList.add('hidden');
+        placeholder.classList.remove('hidden');
+        removeBtn.classList.add('hidden');
+        chosenText.textContent = 'Belum ada file dipilih';
+        hapusInput.value = '1';
+    }
+
     // Modal Add Product
     function openAddProductModal() {
         document.getElementById('modal-prod-title').textContent = 'Tambah Produk Baru';
@@ -784,7 +881,8 @@ require_once __DIR__ . '/templates/topbar.php';
         document.getElementById('input-prod-sell').value = '0';
         document.getElementById('input-prod-stock').value = '10';
         document.getElementById('input-prod-min-stock').value = '5';
-        document.getElementById('input-prod-img').value = '';
+        clearProductImage();
+        document.getElementById('input-hapus-gambar').value = '0';
         calcMargin();
         openModal('modal-product');
     }
@@ -803,8 +901,34 @@ require_once __DIR__ . '/templates/topbar.php';
         document.getElementById('input-prod-sell').value = prod.harga_jual;
         document.getElementById('input-prod-stock').value = prod.stok;
         document.getElementById('input-prod-min-stock').value = prod.min_stok;
-        document.getElementById('input-prod-img').value = prod.gambar || '';
         document.getElementById('input-prod-status').value = prod.status;
+        document.getElementById('input-hapus-gambar').value = '0';
+        
+        // Reset file upload
+        document.getElementById('input-prod-file').value = '';
+        
+        const preview = document.getElementById('prod-img-preview');
+        const placeholder = document.getElementById('prod-img-placeholder');
+        const removeBtn = document.getElementById('btn-remove-img');
+        const chosenText = document.getElementById('file-chosen-text');
+        const urlInput = document.getElementById('input-prod-img');
+
+        if (prod.gambar) {
+            preview.src = prod.gambar;
+            preview.classList.remove('hidden');
+            placeholder.classList.add('hidden');
+            removeBtn.classList.remove('hidden');
+            chosenText.textContent = prod.gambar.startsWith('public/uploads') ? 'Foto lokal tersimpan' : 'URL gambar aktif';
+            urlInput.value = prod.gambar.startsWith('http') ? prod.gambar : '';
+        } else {
+            preview.src = '';
+            preview.classList.add('hidden');
+            placeholder.classList.remove('hidden');
+            removeBtn.classList.add('hidden');
+            chosenText.textContent = 'Belum ada file dipilih';
+            urlInput.value = '';
+        }
+
         calcMargin();
         openModal('modal-product');
     }

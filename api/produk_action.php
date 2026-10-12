@@ -11,12 +11,70 @@ $user = require_login();
 $db = get_db();
 
 $action = $_POST['action'] ?? $_GET['action'] ?? '';
+if ($action === '') {
+    return;
+}
 $csrfToken = $_POST['csrf_token'] ?? $_GET['csrf_token'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? null;
 
 if (!validate_csrf($csrfToken)) {
     $_SESSION['flash_error'] = 'Validasi keamanan CSRF gagal atau sesi Anda kedaluwarsa. Silakan coba kembali.';
     header('Location: ../inventory.php?tab=produk');
     exit;
+}
+
+/**
+ * Helper untuk menangani unggahan berkas gambar produk dari perangkat atau fallback ke URL
+ */
+function handle_product_image_upload(?array $file, ?string $urlInput, ?string $currentImage = null, bool $removeImage = false): ?string {
+    if ($removeImage) {
+        return null;
+    }
+
+    // 1. Cek berkas upload dari perangkat
+    if ($file && isset($file['error']) && $file['error'] === UPLOAD_ERR_OK && $file['size'] > 0) {
+        // Batas maksimal ukuran 3MB
+        if ($file['size'] > 3 * 1024 * 1024) {
+            throw new Exception("Ukuran berkas gambar terlalu besar. Maksimal 3MB.");
+        }
+
+        // Validasi tipe MIME aktual berkas
+        $finfo = new finfo(FILEINFO_MIME_TYPE);
+        $mime = $finfo->file($file['tmp_name']);
+        $allowedMimes = [
+            'image/jpeg' => 'jpg',
+            'image/png'  => 'png',
+            'image/webp' => 'webp',
+            'image/gif'  => 'gif',
+        ];
+
+        if (!isset($allowedMimes[$mime])) {
+            throw new Exception("Format berkas gambar tidak didukung. Harap gunakan format JPG, PNG, WEBP, atau GIF.");
+        }
+
+        $extension = $allowedMimes[$mime];
+        $uploadDir = __DIR__ . '/../public/uploads/produk/';
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+
+        $filename = 'prod_' . date('Ymd_His') . '_' . bin2hex(random_bytes(4)) . '.' . $extension;
+        $targetPath = $uploadDir . $filename;
+
+        if (!move_uploaded_file($file['tmp_name'], $targetPath)) {
+            throw new Exception("Gagal menyimpan berkas gambar ke direktori server.");
+        }
+
+        return 'public/uploads/produk/' . $filename;
+    }
+
+    // 2. Jika ada URL teks yang diisi
+    $trimmedUrl = trim($urlInput ?? '');
+    if ($trimmedUrl !== '') {
+        return $trimmedUrl;
+    }
+
+    // 3. Fallback ke gambar yang sudah ada (mode edit)
+    return $currentImage;
 }
 
 try {
@@ -30,7 +88,6 @@ try {
         $hargaJual  = (float)($_POST['harga_jual'] ?? 0);
         $stok       = (int)($_POST['stok'] ?? 0);
         $minStok    = (int)($_POST['min_stok'] ?? 5);
-        $gambar     = trim($_POST['gambar'] ?? '') ?: null;
         $status     = ($_POST['status'] ?? 'aktif') === 'nonaktif' ? 'nonaktif' : 'aktif';
 
         if ($namaProduk === '' || $sku === '' || $kategoriId <= 0) {
@@ -43,6 +100,9 @@ try {
         if ($stmtCheck->fetch()) {
             throw new Exception("Kode SKU '{$sku}' sudah digunakan oleh produk lain.");
         }
+
+        // Proses gambar (file unggahan atau URL)
+        $gambar = handle_product_image_upload($_FILES['gambar_file'] ?? null, $_POST['gambar'] ?? null, null, false);
 
         $stmt = $db->prepare("
             INSERT INTO produk (
@@ -82,8 +142,8 @@ try {
         $hargaJual  = (float)($_POST['harga_jual'] ?? 0);
         $stok       = (int)($_POST['stok'] ?? 0);
         $minStok    = (int)($_POST['min_stok'] ?? 5);
-        $gambar     = trim($_POST['gambar'] ?? '') ?: null;
         $status     = ($_POST['status'] ?? 'aktif') === 'nonaktif' ? 'nonaktif' : 'aktif';
+        $removeImg  = ($_POST['hapus_gambar'] ?? '0') === '1';
 
         if ($id <= 0 || $namaProduk === '' || $sku === '' || $kategoriId <= 0) {
             throw new Exception("Data produk tidak lengkap untuk diperbarui.");
@@ -95,6 +155,14 @@ try {
         if ($stmtCheck->fetch()) {
             throw new Exception("Kode SKU '{$sku}' sudah digunakan oleh produk lain.");
         }
+
+        // Ambil data gambar saat ini untuk fallback
+        $stmtCurr = $db->prepare("SELECT gambar FROM produk WHERE id = ?");
+        $stmtCurr->execute([$id]);
+        $currentImg = $stmtCurr->fetchColumn() ?: null;
+
+        // Proses gambar (file unggahan, input URL baru, atau pertahankan lama)
+        $gambar = handle_product_image_upload($_FILES['gambar_file'] ?? null, $_POST['gambar'] ?? null, $currentImg, $removeImg);
 
         $stmt = $db->prepare("
             UPDATE produk SET 
