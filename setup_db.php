@@ -34,14 +34,39 @@ try {
     $pdo->exec($schemaSql);
     echo "[OK] Skema tabel berhasil dibuat / diverifikasi\n";
 
-    // 4. Jalankan seed.sql
-    $seedFile = __DIR__ . '/database/seed.sql';
-    if (!file_exists($seedFile)) {
-        throw new Exception("File seed.sql tidak ditemukan di: {$seedFile}");
+    // 4. Jalankan seed data (Mendukung flag --clean untuk mengosongkan katalog & transaksi dummy)
+    $isClean = in_array('--clean', $argv ?? []);
+
+    if ($isClean) {
+        $defaultPassword = password_hash('password123', PASSWORD_BCRYPT);
+        $initSql = "
+            INSERT INTO pengaturan (id, nama_toko, cabang, alamat, telepon, persen_ppn, printer_footer)
+            VALUES (1, 'NusaPOS Retail Mart', 'Cabang Menteng - Jakarta Pusat', 'Jl. HOS Cokroaminoto No. 42, Menteng, Jakarta Pusat', '(021) 3928-1920', 11.00, 'Terima kasih telah berbelanja di NusaPOS!')
+            ON DUPLICATE KEY UPDATE nama_toko=VALUES(nama_toko);
+
+            INSERT INTO users (id, username, email, password, nama_lengkap, role, cabang, status)
+            VALUES 
+            (1, 'budisantoso', 'budi.santoso@nusapos.id', '{$defaultPassword}', 'Budi Santoso', 'admin', 'Cabang Menteng - Jakarta Pusat', 'aktif'),
+            (2, 'sitikasir1', 'siti.rahma@nusapos.id', '{$defaultPassword}', 'Siti Rahmawati', 'kasir', 'Cabang Menteng - Jakarta Pusat', 'aktif')
+            ON DUPLICATE KEY UPDATE username=VALUES(username);
+
+            INSERT INTO satuan (id, nama_satuan, singkatan)
+            VALUES
+            (1, 'Pieces', 'Pcs'), (2, 'Botol', 'Btl'), (3, 'Pack', 'Pck'),
+            (4, 'Dus / Karton', 'Dus'), (5, 'Cup', 'Cup'), (6, 'Kilogram', 'Kg'), (7, 'Liter', 'Ltr')
+            ON DUPLICATE KEY UPDATE nama_satuan=VALUES(nama_satuan);
+        ";
+        $pdo->exec($initSql);
+        echo "[OK] Mode Bersih (--clean): Hanya akun pengguna, pengaturan toko, dan satuan unit yang dibuat.\n";
+    } else {
+        $seedFile = __DIR__ . '/database/seed.sql';
+        if (!file_exists($seedFile)) {
+            throw new Exception("File seed.sql tidak ditemukan di: {$seedFile}");
+        }
+        $seedSql = file_get_contents($seedFile);
+        $pdo->exec($seedSql);
+        echo "[OK] Data awal (seed lengkap dengan data contoh) berhasil diisikan\n";
     }
-    $seedSql = file_get_contents($seedFile);
-    $pdo->exec($seedSql);
-    echo "[OK] Data awal (seed) berhasil diisikan\n";
 
     // 5. Verifikasi ringkas
     $userCount = $pdo->query("SELECT COUNT(*) FROM users")->fetchColumn();
