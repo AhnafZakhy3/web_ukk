@@ -328,7 +328,7 @@ require_once __DIR__ . '/templates/topbar.php';
                     </div>
                 </div>
 
-                <div class="overflow-x-auto" id="product-table-container">
+                <div class="overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" id="product-table-container">
                     <table class="w-full text-left border-collapse min-w-[1100px]">
                         <thead>
                             <tr class="bg-surface-container-low text-outline font-label-sm text-xs uppercase tracking-wider border-b border-outline-variant/30">
@@ -1181,9 +1181,11 @@ require_once __DIR__ . '/templates/topbar.php';
         function updateSliderDimensions() {
             const scrollWidth = tableContainer.scrollWidth;
             const clientWidth = tableContainer.clientWidth;
-            trackDummy.style.width = scrollWidth + 'px';
+            const maxScroll = Math.max(0, scrollWidth - clientWidth);
+            // 1:1 exact pixel synchronization between track dummy and table scroll range
+            trackDummy.style.width = (trackWrapper.clientWidth + maxScroll) + 'px';
             if (sliderBar) {
-                if (scrollWidth > clientWidth) {
+                if (maxScroll > 0) {
                     sliderBar.classList.remove('hidden');
                     sliderBar.classList.add('flex');
                 } else {
@@ -1198,15 +1200,24 @@ require_once __DIR__ . '/templates/topbar.php';
             if (isSyncing) return;
             isSyncing = true;
             trackWrapper.scrollLeft = tableContainer.scrollLeft;
-            isSyncing = false;
+            requestAnimationFrame(() => { isSyncing = false; });
         });
 
         trackWrapper.addEventListener('scroll', () => {
             if (isSyncing) return;
             isSyncing = true;
             tableContainer.scrollLeft = trackWrapper.scrollLeft;
-            isSyncing = false;
+            requestAnimationFrame(() => { isSyncing = false; });
         });
+
+        if (sliderBar) {
+            sliderBar.addEventListener('wheel', (e) => {
+                if (e.deltaY !== 0 && e.deltaX === 0) {
+                    e.preventDefault();
+                    tableContainer.scrollLeft += e.deltaY;
+                }
+            }, { passive: false });
+        }
 
         updateSliderDimensions();
         window.addEventListener('resize', updateSliderDimensions);

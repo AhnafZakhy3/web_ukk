@@ -121,6 +121,20 @@ echo "  [" . ($hasDesktopToggleIcon ? "PASS" : "FAIL") . "] Desktop sidebar togg
 echo "  [" . ($hasSidebarCollapseFunc ? "PASS" : "FAIL") . "] Sidebar toggle function attached\n";
 echo "  [" . ($hasAntiFouc ? "PASS" : "FAIL") . "] Anti-FOUC sidebar-collapsed state check present in header\n";
 
+// 6. Test Deep Edge Cases: Sync math, scrollbar hiding, mobile scoping, shortcut guard
+echo "\nTEST 6: DEEP EDGE CASE & ROBUSTNESS CHECKS\n";
+$hasScrollbarHidden = strpos($body10, '[scrollbar-width:none]') !== false;
+$hasMaxScrollMath = strpos($body10, 'maxScroll') !== false && strpos($body10, 'trackWrapper.clientWidth + maxScroll') !== false;
+$appJsContent = file_get_contents(__DIR__ . '/../public/js/app.js');
+$hasShortcutGuard = strpos($appJsContent, 'INPUT') !== false && strpos($appJsContent, 'TEXTAREA') !== false;
+$inputCssContent = file_get_contents(__DIR__ . '/../src/input.css');
+$hasMediaScopedSidebar = strpos($inputCssContent, '@media (min-width: 768px)') !== false;
+
+echo "  [" . ($hasScrollbarHidden ? "PASS" : "FAIL") . "] Table container hides redundant native scrollbar\n";
+echo "  [" . ($hasMaxScrollMath ? "PASS" : "FAIL") . "] Slider track dummy uses 1:1 maxScroll matching (no dead zone)\n";
+echo "  [" . ($hasShortcutGuard ? "PASS" : "FAIL") . "] Keyboard shortcut Ctrl+B guarded against active form inputs\n";
+echo "  [" . ($hasMediaScopedSidebar ? "PASS" : "FAIL") . "] Sidebar-collapsed CSS properly scoped to desktop (min-width: 768px)\n";
+
 // Clean up cookie
 if (file_exists($cookieFile)) unlink($cookieFile);
 

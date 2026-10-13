@@ -117,6 +117,10 @@ function updateSidebarToggleIcon() {
 // Global shortcut handler (Ctrl+B / Cmd+B for sidebar toggle)
 document.addEventListener('keydown', (e) => {
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
+    const target = e.target;
+    if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+      return;
+    }
     e.preventDefault();
     toggleSidebarCollapse();
   }

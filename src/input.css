@@ -147,17 +147,19 @@ html.dark body {
     transition: left 0.3s ease;
   }
 
-  /* Sidebar Collapsed State */
-  html.sidebar-collapsed #app-sidebar {
-    transform: translateX(-100%) !important;
-  }
+  /* Sidebar Collapsed State (Desktop only) */
+  @media (min-width: 768px) {
+    html.sidebar-collapsed #app-sidebar {
+      transform: translateX(-100%) !important;
+    }
 
-  html.sidebar-collapsed .app-topbar {
-    left: 0 !important;
-  }
+    html.sidebar-collapsed .app-topbar {
+      left: 0 !important;
+    }
 
-  html.sidebar-collapsed .app-layout-content {
-    padding-left: 0 !important;
+    html.sidebar-collapsed .app-layout-content {
+      padding-left: 0 !important;
+    }
   }
 
   @media (max-width: 768px) {
