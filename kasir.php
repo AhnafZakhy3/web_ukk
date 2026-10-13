@@ -39,16 +39,16 @@ require_once __DIR__ . '/templates/sidebar.php';
 require_once __DIR__ . '/templates/topbar.php';
 ?>
 
-<div class="app-layout-content pl-0 md:pl-64 pt-16 min-h-screen bg-surface">
-    <main class="p-space-md lg:p-space-lg">
+<div class="app-layout-content pl-0 md:pl-64 pt-16 min-h-screen lg:h-screen lg:overflow-hidden bg-surface">
+    <main class="p-space-md lg:p-space-lg lg:h-[calc(100vh-4rem)] lg:overflow-hidden flex flex-col">
         <!-- Dual Column POS Layout -->
-        <div class="grid grid-cols-12 gap-space-md lg:gap-space-lg items-start">
+        <div class="grid grid-cols-12 gap-space-md lg:gap-space-lg items-stretch lg:h-full lg:min-h-0 flex-1">
             
             <!-- Kolom Kiri: Katalog Produk & Pencarian (Grid 7 ~ 8 Kolom) -->
-            <section class="col-span-12 lg:col-span-7 xl:col-span-8 flex flex-col gap-space-md">
+            <section class="col-span-12 lg:col-span-7 xl:col-span-8 flex flex-col gap-space-md lg:h-full lg:min-h-0">
                 
                 <!-- Search & Filter Bar -->
-                <div class="bg-surface-container-lowest p-space-md rounded-2xl shadow-sm border border-outline-variant/30 space-y-space-md">
+                <div class="bg-surface-container-lowest p-space-md rounded-2xl shadow-sm border border-outline-variant/30 space-y-space-md shrink-0">
                     <div class="flex items-center gap-space-sm">
                         <div class="relative flex-1">
                             <span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-outline text-[20px]">search</span>
@@ -75,93 +75,95 @@ require_once __DIR__ . '/templates/topbar.php';
                     </div>
                 </div>
 
-                <!-- Product Catalog Grid -->
-                <div class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-space-md" id="catalog-grid">
-                    <?php foreach ($products as $prod): 
-                        $prodJson = htmlspecialchars(json_encode([
-                            'id' => (int)$prod['id'],
-                            'sku' => $prod['sku'],
-                            'barcode' => $prod['barcode'],
-                            'nama_produk' => $prod['nama_produk'],
-                            'harga_jual' => (float)$prod['harga_jual'],
-                            'stok' => (int)$prod['stok'],
-                        ]), ENT_QUOTES, 'UTF-8');
-                        $isOutOfStock = ((int)$prod['stok'] <= 0);
-                        $isLowStock = ((int)$prod['stok'] > 0 && (int)$prod['stok'] <= (int)$prod['min_stok']);
-                    ?>
-                    <div class="product-card group bg-surface-container-lowest p-space-sm rounded-xl shadow-sm hover:shadow-md border border-outline-variant/30 transition-all flex flex-col justify-between"
-                        data-id="<?= $prod['id'] ?>"
-                        data-category="<?= strtolower($prod['kode_kategori']) ?>"
-                        data-name="<?= htmlspecialchars($prod['nama_produk']) ?>"
-                        data-sku="<?= htmlspecialchars($prod['sku']) ?>"
-                        data-barcode="<?= htmlspecialchars($prod['barcode'] ?? '') ?>"
-                        data-stok="<?= $prod['stok'] ?>"
-                        data-json='<?= $prodJson ?>'>
-                        <div>
-                            <!-- Gambar Produk -->
-                            <div class="relative w-full h-32 rounded-lg bg-surface-container-low overflow-hidden mb-space-sm flex items-center justify-center">
-                                <?php if (!empty($prod['gambar'])): ?>
-                                    <img src="<?= htmlspecialchars($prod['gambar']) ?>" alt="<?= htmlspecialchars($prod['nama_produk']) ?>" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
-                                <?php else: ?>
-                                    <span class="material-symbols-outlined text-[42px] text-outline/40">shopping_bag</span>
-                                <?php endif; ?>
-                                <span class="absolute top-2 left-2 bg-surface-container-lowest/90 backdrop-blur-sm px-2 py-0.5 rounded font-label-sm text-xs text-on-surface-variant font-semibold">
-                                    <?= htmlspecialchars($prod['nama_kategori']) ?>
-                                </span>
-                            </div>
-
-                            <!-- SKU & Stock Badge -->
-                            <div class="flex items-center justify-between gap-1 mb-1">
-                                <span class="font-label-sm text-xs text-outline font-mono truncate"><?= htmlspecialchars($prod['sku']) ?></span>
-                                <?php if ($isOutOfStock): ?>
-                                    <span class="stock-badge bg-error-container text-error px-2 py-0.5 rounded-full font-label-sm text-xs font-semibold">Habis</span>
-                                <?php elseif ($isLowStock): ?>
-                                    <span class="stock-badge bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-label-sm text-xs font-semibold">Sisa: <?= $prod['stok'] ?></span>
-                                <?php else: ?>
-                                    <span class="stock-badge bg-tertiary-fixed text-on-tertiary-fixed-variant px-2 py-0.5 rounded-full font-label-sm text-xs font-semibold">Stok: <?= $prod['stok'] ?></span>
-                                <?php endif; ?>
-                            </div>
-
-                            <!-- Title -->
-                            <h3 class="font-headline-sm text-sm text-on-surface line-clamp-2 leading-snug font-semibold" title="<?= htmlspecialchars($prod['nama_produk']) ?>">
-                                <?= htmlspecialchars($prod['nama_produk']) ?>
-                            </h3>
-                        </div>
-
-                        <!-- Price & Add Button -->
-                        <div class="mt-space-md pt-space-xs flex items-center justify-between border-t border-outline-variant/20">
+                <!-- Product Catalog Grid Container (Scrollable independently) -->
+                <div class="flex-1 lg:overflow-y-auto lg:min-h-0 overscroll-contain pr-1">
+                    <div class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-space-md" id="catalog-grid">
+                        <?php foreach ($products as $prod): 
+                            $prodJson = htmlspecialchars(json_encode([
+                                'id' => (int)$prod['id'],
+                                'sku' => $prod['sku'],
+                                'barcode' => $prod['barcode'],
+                                'nama_produk' => $prod['nama_produk'],
+                                'harga_jual' => (float)$prod['harga_jual'],
+                                'stok' => (int)$prod['stok'],
+                            ]), ENT_QUOTES, 'UTF-8');
+                            $isOutOfStock = ((int)$prod['stok'] <= 0);
+                            $isLowStock = ((int)$prod['stok'] > 0 && (int)$prod['stok'] <= (int)$prod['min_stok']);
+                        ?>
+                        <div class="product-card group bg-surface-container-lowest p-space-sm rounded-xl shadow-sm hover:shadow-md border border-outline-variant/30 transition-all flex flex-col justify-between"
+                            data-id="<?= $prod['id'] ?>"
+                            data-category="<?= strtolower($prod['kode_kategori']) ?>"
+                            data-name="<?= htmlspecialchars($prod['nama_produk']) ?>"
+                            data-sku="<?= htmlspecialchars($prod['sku']) ?>"
+                            data-barcode="<?= htmlspecialchars($prod['barcode'] ?? '') ?>"
+                            data-stok="<?= $prod['stok'] ?>"
+                            data-json='<?= $prodJson ?>'>
                             <div>
-                                <span class="font-label-sm text-[11px] text-outline block">Harga</span>
-                                <span class="font-currency-table text-sm text-primary font-bold">
-                                    <?= format_rupiah($prod['harga_jual']) ?>
-                                </span>
-                            </div>
-                            <button type="button" 
-                                onclick='addToCart(JSON.parse(this.closest(".product-card").getAttribute("data-json")))' 
-                                <?= $isOutOfStock ? 'disabled' : '' ?>
-                                title="<?= $isOutOfStock ? 'Stok Habis' : 'Tambah ke Keranjang' ?>" 
-                                class="btn-add-cart w-9 h-9 rounded-lg <?= $isOutOfStock ? 'bg-surface-container text-outline cursor-not-allowed' : 'bg-primary-container/10 hover:bg-primary-container text-primary hover:text-on-primary active:scale-95' ?> transition-all flex items-center justify-center shadow-sm">
-                                <span class="material-symbols-outlined text-[20px]"><?= $isOutOfStock ? 'block' : 'add_shopping_cart' ?></span>
-                            </button>
-                        </div>
-                    </div>
-                    <?php endforeach; ?>
-                </div>
+                                <!-- Gambar Produk -->
+                                <div class="relative w-full h-32 rounded-lg bg-surface-container-low overflow-hidden mb-space-sm flex items-center justify-center">
+                                    <?php if (!empty($prod['gambar'])): ?>
+                                        <img src="<?= htmlspecialchars($prod['gambar']) ?>" alt="<?= htmlspecialchars($prod['nama_produk']) ?>" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                                    <?php else: ?>
+                                        <span class="material-symbols-outlined text-[42px] text-outline/40">shopping_bag</span>
+                                    <?php endif; ?>
+                                    <span class="absolute top-2 left-2 bg-surface-container-lowest/90 backdrop-blur-sm px-2 py-0.5 rounded font-label-sm text-xs text-on-surface-variant font-semibold">
+                                        <?= htmlspecialchars($prod['nama_kategori']) ?>
+                                    </span>
+                                </div>
 
-                <!-- Empty search state -->
-                <div id="catalog-not-found" class="hidden p-12 text-center bg-surface-container-lowest rounded-2xl border border-outline-variant/30 space-y-3">
-                    <span class="material-symbols-outlined text-[48px] text-outline">search_off</span>
-                    <h4 class="font-headline-md text-on-surface font-bold">Produk Tidak Ditemukan</h4>
-                    <p class="font-body-md text-on-surface-variant max-w-sm mx-auto">Tidak ada produk yang cocok dengan pencarian atau barcode yang dimasukkan.</p>
+                                <!-- SKU & Stock Badge -->
+                                <div class="flex items-center justify-between gap-1 mb-1">
+                                    <span class="font-label-sm text-xs text-outline font-mono truncate"><?= htmlspecialchars($prod['sku']) ?></span>
+                                    <?php if ($isOutOfStock): ?>
+                                        <span class="stock-badge bg-error-container text-error px-2 py-0.5 rounded-full font-label-sm text-xs font-semibold">Habis</span>
+                                    <?php elseif ($isLowStock): ?>
+                                        <span class="stock-badge bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-label-sm text-xs font-semibold">Sisa: <?= $prod['stok'] ?></span>
+                                    <?php else: ?>
+                                        <span class="stock-badge bg-tertiary-fixed text-on-tertiary-fixed-variant px-2 py-0.5 rounded-full font-label-sm text-xs font-semibold">Stok: <?= $prod['stok'] ?></span>
+                                    <?php endif; ?>
+                                </div>
+
+                                <!-- Title -->
+                                <h3 class="font-headline-sm text-sm text-on-surface line-clamp-2 leading-snug font-semibold" title="<?= htmlspecialchars($prod['nama_produk']) ?>">
+                                    <?= htmlspecialchars($prod['nama_produk']) ?>
+                                </h3>
+                            </div>
+
+                            <!-- Price & Add Button -->
+                            <div class="mt-space-md pt-space-xs flex items-center justify-between border-t border-outline-variant/20">
+                                <div>
+                                    <span class="font-label-sm text-[11px] text-outline block">Harga</span>
+                                    <span class="font-currency-table text-sm text-primary font-bold">
+                                        <?= format_rupiah($prod['harga_jual']) ?>
+                                    </span>
+                                </div>
+                                <button type="button" 
+                                    onclick='addToCart(JSON.parse(this.closest(".product-card").getAttribute("data-json")))' 
+                                    <?= $isOutOfStock ? 'disabled' : '' ?>
+                                    title="<?= $isOutOfStock ? 'Stok Habis' : 'Tambah ke Keranjang' ?>" 
+                                    class="btn-add-cart w-9 h-9 rounded-lg <?= $isOutOfStock ? 'bg-surface-container text-outline cursor-not-allowed' : 'bg-primary-container/10 hover:bg-primary-container text-primary hover:text-on-primary active:scale-95' ?> transition-all flex items-center justify-center shadow-sm">
+                                    <span class="material-symbols-outlined text-[20px]"><?= $isOutOfStock ? 'block' : 'add_shopping_cart' ?></span>
+                                </button>
+                            </div>
+                        </div>
+                        <?php endforeach; ?>
+                    </div>
+
+                    <!-- Empty search state -->
+                    <div id="catalog-not-found" class="hidden p-12 text-center bg-surface-container-lowest rounded-2xl border border-outline-variant/30 space-y-3">
+                        <span class="material-symbols-outlined text-[48px] text-outline">search_off</span>
+                        <h4 class="font-headline-md text-on-surface font-bold">Produk Tidak Ditemukan</h4>
+                        <p class="font-body-md text-on-surface-variant max-w-sm mx-auto">Tidak ada produk yang cocok dengan pencarian atau barcode yang dimasukkan.</p>
+                    </div>
                 </div>
             </section>
 
-            <!-- Kolom Kanan: Keranjang Belanja & Checkout (Grid 4 ~ 5 Kolom Sticky) -->
-            <section class="col-span-12 lg:col-span-5 xl:col-span-4 sticky top-20">
-                <div class="bg-surface-container-lowest rounded-2xl shadow-md border border-outline-variant/30 p-space-md flex flex-col h-[calc(100vh-100px)] min-h-[640px] justify-between">
+            <!-- Kolom Kanan: Keranjang Belanja & Checkout (Grid 4 ~ 5 Kolom) -->
+            <section class="col-span-12 lg:col-span-5 xl:col-span-4 lg:h-full lg:min-h-0 flex flex-col">
+                <div class="bg-surface-container-lowest rounded-2xl shadow-md border border-outline-variant/30 p-space-md flex flex-col lg:h-full lg:max-h-full min-h-0 justify-between">
                     
                     <!-- Cart Header -->
-                    <div>
+                    <div class="shrink-0">
                         <div class="pb-space-sm border-b border-outline-variant/30">
                             <div class="flex items-center justify-between mb-2">
                                 <div class="flex items-center gap-2">
@@ -188,7 +190,7 @@ require_once __DIR__ . '/templates/topbar.php';
                     </div>
 
                     <!-- Cart Item List (Scrollable Area) -->
-                    <div class="flex-1 overflow-y-auto py-space-sm space-y-space-sm pr-1" id="cart-item-list">
+                    <div class="flex-1 overflow-y-auto py-space-sm space-y-space-sm pr-1 overscroll-contain min-h-0" id="cart-item-list">
                         <!-- Diisi secara dinamis oleh pos.js -->
                     </div>
 
@@ -202,7 +204,7 @@ require_once __DIR__ . '/templates/topbar.php';
                     </div>
 
                     <!-- Cart Footer & Calculation -->
-                    <div class="pt-space-sm border-t border-outline-variant/30 space-y-3">
+                    <div class="shrink-0 pt-space-sm border-t border-outline-variant/30 space-y-3">
                         <div class="space-y-1.5 font-body-sm text-xs">
                             <div class="flex justify-between text-on-surface-variant">
                                 <span>Subtotal Belanja</span>

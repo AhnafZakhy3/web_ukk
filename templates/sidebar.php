@@ -14,17 +14,23 @@ $toko = get_toko_info();
 <aside id="app-sidebar" class="fixed left-0 top-0 h-screen w-64 bg-surface-container-lowest border-r border-outline-variant/40 z-50 flex flex-col justify-between shadow-[0_1px_8px_rgba(0,0,0,0.04)] -translate-x-full md:translate-x-0 transition-transform duration-300">
     <div class="flex flex-col">
         <!-- Brand Header -->
-        <div class="p-space-lg border-b border-outline-variant/30 flex items-center gap-space-sm">
-            <div class="w-10 h-10 rounded-xl bg-primary-container flex items-center justify-center text-on-primary shadow-sm shrink-0">
-                <span class="material-symbols-outlined text-[24px]">point_of_sale</span>
+        <div class="p-space-lg border-b border-outline-variant/30 flex items-center justify-between gap-space-sm">
+            <div class="flex items-center gap-space-sm min-w-0">
+                <div class="w-10 h-10 rounded-xl bg-primary-container flex items-center justify-center text-on-primary shadow-sm shrink-0">
+                    <span class="material-symbols-outlined text-[24px]">point_of_sale</span>
+                </div>
+                <div class="flex flex-col min-w-0">
+                    <span class="font-headline-sm text-headline-sm text-primary tracking-tight font-bold truncate">NusaPOS</span>
+                    <span class="font-label-sm text-label-sm text-on-surface-variant truncate flex items-center gap-1">
+                        <span class="material-symbols-outlined text-[13px] text-tertiary">store</span>
+                        <?= htmlspecialchars($toko['cabang']) ?>
+                    </span>
+                </div>
             </div>
-            <div class="flex flex-col min-w-0">
-                <span class="font-headline-sm text-headline-sm text-primary tracking-tight font-bold truncate">NusaPOS</span>
-                <span class="font-label-sm text-label-sm text-on-surface-variant truncate flex items-center gap-1">
-                    <span class="material-symbols-outlined text-[13px] text-tertiary">store</span>
-                    <?= htmlspecialchars($toko['cabang']) ?>
-                </span>
-            </div>
+            <!-- Desktop collapse button inside sidebar -->
+            <button type="button" onclick="toggleSidebarCollapse()" title="Sembunyikan Sidebar (Ctrl+B)" aria-label="Sembunyikan Sidebar" class="hidden md:flex p-1.5 rounded-lg text-outline hover:text-on-surface hover:bg-surface-container transition-colors cursor-pointer shrink-0">
+                <span class="material-symbols-outlined text-[20px]">first_page</span>
+            </button>
         </div>
 
         <!-- Section Label -->

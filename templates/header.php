@@ -18,13 +18,17 @@ $toko = get_toko_info();
     <title><?= htmlspecialchars($pageTitle) ?> | <?= htmlspecialchars($toko['nama_toko']) ?></title>
     
     <script>
-        // Deteksi dan inisialisasi mode gelap/terang sebelum render (Anti-FOUC)
+        // Deteksi dan inisialisasi mode gelap/terang & sidebar collapse sebelum render (Anti-FOUC)
         (function() {
             const savedTheme = localStorage.getItem('nusapos_theme');
             if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
                 document.documentElement.classList.add('dark');
             } else {
                 document.documentElement.classList.remove('dark');
+            }
+            const savedSidebar = localStorage.getItem('nusapos_sidebar_collapsed');
+            if (savedSidebar === 'true') {
+                document.documentElement.classList.add('sidebar-collapsed');
             }
         })();
     </script>

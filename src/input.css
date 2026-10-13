@@ -139,10 +139,25 @@ html.dark body {
     padding-top: 4rem; /* 64px topbar */
     padding-left: 16rem; /* 256px sidebar */
     min-height: 100vh;
+    transition: padding-left 0.3s ease;
   }
 
   .app-topbar {
     left: 16rem; /* 256px sidebar offset */
+    transition: left 0.3s ease;
+  }
+
+  /* Sidebar Collapsed State */
+  html.sidebar-collapsed #app-sidebar {
+    transform: translateX(-100%) !important;
+  }
+
+  html.sidebar-collapsed .app-topbar {
+    left: 0 !important;
+  }
+
+  html.sidebar-collapsed .app-layout-content {
+    padding-left: 0 !important;
   }
 
   @media (max-width: 768px) {

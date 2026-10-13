@@ -31,53 +31,95 @@ $categories = $db->query("
 
 $units = $db->query("SELECT * FROM satuan ORDER BY nama_satuan ASC")->fetchAll();
 
-// 3. Query Produk dengan Filter
+// 3. Query Produk dengan Filter & Pagination
 $filterCat = $_GET['kategori'] ?? 'all';
 $filterStock = $_GET['stok'] ?? 'all';
 $filterActive = $_GET['status'] ?? 'all';
 $searchQuery = trim($_GET['q'] ?? '');
+
+$baseWhere = " WHERE 1=1";
+$params = [];
+
+if ($filterCat !== 'all' && $filterCat !== '') {
+    $baseWhere .= " AND (k.kode = :cat OR k.id = :cat_id)";
+    $params[':cat'] = $filterCat;
+    $params[':cat_id'] = $filterCat;
+}
+
+if ($filterStock === 'tersedia') {
+    $baseWhere .= " AND p.stok > p.min_stok";
+} elseif ($filterStock === 'menipis') {
+    $baseWhere .= " AND p.stok > 0 AND p.stok <= p.min_stok";
+} elseif ($filterStock === 'habis') {
+    $baseWhere .= " AND p.stok <= 0";
+}
+
+if ($filterActive === 'aktif') {
+    $baseWhere .= " AND p.status = 'aktif'";
+} elseif ($filterActive === 'nonaktif') {
+    $baseWhere .= " AND p.status = 'nonaktif'";
+}
+
+if ($searchQuery !== '') {
+    $baseWhere .= " AND (p.nama_produk LIKE :q1 OR p.sku LIKE :q2 OR p.barcode LIKE :q3)";
+    $params[':q1'] = "%{$searchQuery}%";
+    $params[':q2'] = "%{$searchQuery}%";
+    $params[':q3'] = "%{$searchQuery}%";
+}
+
+// 4. Hitung Total Data untuk Pagination
+$countSql = "
+    SELECT COUNT(*) 
+    FROM produk p
+    JOIN kategori k ON p.kategori_id = k.id
+    LEFT JOIN satuan s ON p.satuan_id = s.id
+    {$baseWhere}
+";
+$countStmt = $db->prepare($countSql);
+$countStmt->execute($params);
+$totalFilteredProducts = (int)$countStmt->fetchColumn();
+
+// Filter per-page limit (10, 30, 50 item)
+$allowedLimits = [10, 30, 50];
+$rawLimit = (int)($_GET['limit'] ?? 10);
+$limit = in_array($rawLimit, $allowedLimits, true) ? $rawLimit : 10;
+
+$totalPages = max(1, (int)ceil($totalFilteredProducts / $limit));
+$page = (int)($_GET['page'] ?? 1);
+if ($page < 1) {
+    $page = 1;
+} elseif ($page > $totalPages) {
+    $page = $totalPages;
+}
+$offset = ($page - 1) * $limit;
 
 $sql = "
     SELECT p.*, k.nama_kategori, k.kode as kode_kategori, s.singkatan as satuan_nama
     FROM produk p
     JOIN kategori k ON p.kategori_id = k.id
     LEFT JOIN satuan s ON p.satuan_id = s.id
-    WHERE 1=1
+    {$baseWhere}
+    ORDER BY p.id DESC
+    LIMIT :limit OFFSET :offset
 ";
-$params = [];
-
-if ($filterCat !== 'all' && $filterCat !== '') {
-    $sql .= " AND (k.kode = :cat OR k.id = :cat_id)";
-    $params[':cat'] = $filterCat;
-    $params[':cat_id'] = $filterCat;
-}
-
-if ($filterStock === 'tersedia') {
-    $sql .= " AND p.stok > p.min_stok";
-} elseif ($filterStock === 'menipis') {
-    $sql .= " AND p.stok > 0 AND p.stok <= p.min_stok";
-} elseif ($filterStock === 'habis') {
-    $sql .= " AND p.stok <= 0";
-}
-
-if ($filterActive === 'aktif') {
-    $sql .= " AND p.status = 'aktif'";
-} elseif ($filterActive === 'nonaktif') {
-    $sql .= " AND p.status = 'nonaktif'";
-}
-
-if ($searchQuery !== '') {
-    $sql .= " AND (p.nama_produk LIKE :q1 OR p.sku LIKE :q2 OR p.barcode LIKE :q3)";
-    $params[':q1'] = "%{$searchQuery}%";
-    $params[':q2'] = "%{$searchQuery}%";
-    $params[':q3'] = "%{$searchQuery}%";
-}
-
-$sql .= " ORDER BY p.id DESC";
 
 $stmt = $db->prepare($sql);
-$stmt->execute($params);
+foreach ($params as $k => $v) {
+    $stmt->bindValue($k, $v);
+}
+$stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+$stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+$stmt->execute();
 $products = $stmt->fetchAll();
+
+$startItem = ($totalFilteredProducts > 0) ? ($offset + 1) : 0;
+$endItem = min($offset + $limit, $totalFilteredProducts);
+
+$paginationQuery = $_GET;
+$paginationQuery['tab'] = 'produk';
+$paginationQuery['limit'] = $limit;
+unset($paginationQuery['page']);
+$basePaginationUrl = 'inventory.php?' . http_build_query($paginationQuery);
 
 require_once __DIR__ . '/templates/header.php';
 require_once __DIR__ . '/templates/sidebar.php';
@@ -190,7 +232,7 @@ require_once __DIR__ . '/templates/topbar.php';
                 </div>
 
                 <!-- Filters -->
-                <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                     <!-- Kategori -->
                     <select name="kategori" class="h-11 px-3 rounded-xl bg-surface-container-low text-on-surface font-label-md text-xs border border-outline-variant/30 focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer">
                         <option value="all">Semua Kategori</option>
@@ -210,10 +252,17 @@ require_once __DIR__ . '/templates/topbar.php';
                     </select>
 
                     <!-- Status Keaktifan -->
-                    <select name="status" class="h-11 px-3 rounded-xl bg-surface-container-low text-on-surface font-label-md text-xs border border-outline-variant/30 focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer col-span-2 sm:col-span-1">
+                    <select name="status" class="h-11 px-3 rounded-xl bg-surface-container-low text-on-surface font-label-md text-xs border border-outline-variant/30 focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer">
                         <option value="all">Semua Status</option>
                         <option value="aktif" <?= ($filterActive === 'aktif') ? 'selected' : '' ?>>Aktif</option>
                         <option value="nonaktif" <?= ($filterActive === 'nonaktif') ? 'selected' : '' ?>>Nonaktif</option>
+                    </select>
+
+                    <!-- Filter Limit Baris -->
+                    <select name="limit" class="h-11 px-3 rounded-xl bg-surface-container-low text-on-surface font-label-md text-xs border border-outline-variant/30 focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer">
+                        <option value="10" <?= ($limit === 10) ? 'selected' : '' ?>>10 / halaman</option>
+                        <option value="30" <?= ($limit === 30) ? 'selected' : '' ?>>30 / halaman</option>
+                        <option value="50" <?= ($limit === 50) ? 'selected' : '' ?>>50 / halaman</option>
                     </select>
                 </div>
 
@@ -234,9 +283,9 @@ require_once __DIR__ . '/templates/topbar.php';
                 <!-- Quick Category Chips -->
                 <div class="flex flex-wrap items-center gap-1.5">
                     <span class="text-xs text-outline font-semibold">Kategori Cepat:</span>
-                    <a href="inventory.php?tab=produk&kategori=all" class="px-2.5 py-1 rounded-full text-xs <?= ($filterCat === 'all') ? 'bg-primary text-on-primary font-bold' : 'bg-surface-container text-on-surface-variant hover:bg-surface-container-high' ?>">Semua</a>
+                    <a href="inventory.php?tab=produk&kategori=all&limit=<?= $limit ?>" class="px-2.5 py-1 rounded-full text-xs <?= ($filterCat === 'all') ? 'bg-primary text-on-primary font-bold' : 'bg-surface-container text-on-surface-variant hover:bg-surface-container-high' ?>">Semua</a>
                     <?php foreach ($categories as $c): ?>
-                    <a href="inventory.php?tab=produk&kategori=<?= $c['kode'] ?>" class="px-2.5 py-1 rounded-full text-xs <?= ($filterCat === $c['kode']) ? 'bg-primary text-on-primary font-bold' : 'bg-surface-container text-on-surface-variant hover:bg-surface-container-high' ?>">
+                    <a href="inventory.php?tab=produk&kategori=<?= $c['kode'] ?>&limit=<?= $limit ?>" class="px-2.5 py-1 rounded-full text-xs <?= ($filterCat === $c['kode']) ? 'bg-primary text-on-primary font-bold' : 'bg-surface-container text-on-surface-variant hover:bg-surface-container-high' ?>">
                         <?= htmlspecialchars($c['nama_kategori']) ?>
                     </a>
                     <?php endforeach; ?>
@@ -261,7 +310,7 @@ require_once __DIR__ . '/templates/topbar.php';
         </div>
 
         <!-- Master Data Product Table -->
-        <div class="bg-surface-container-lowest rounded-2xl shadow-sm border border-outline-variant/30 overflow-hidden flex flex-col">
+        <div class="bg-surface-container-lowest rounded-2xl shadow-sm border border-outline-variant/30 flex flex-col relative" id="product-table-card">
             
             <!-- Batch Action Toolbar -->
             <form id="form-batch" method="POST" action="api/produk_action.php">
@@ -279,8 +328,8 @@ require_once __DIR__ . '/templates/topbar.php';
                     </div>
                 </div>
 
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
+                <div class="overflow-x-auto" id="product-table-container">
+                    <table class="w-full text-left border-collapse min-w-[1100px]">
                         <thead>
                             <tr class="bg-surface-container-low text-outline font-label-sm text-xs uppercase tracking-wider border-b border-outline-variant/30">
                                 <th class="py-3.5 px-4 w-12 text-center">
@@ -415,6 +464,114 @@ require_once __DIR__ . '/templates/topbar.php';
                     </table>
                 </div>
             </form>
+
+            <!-- Sticky Horizontal Scrollbar Bar at bottom of screen -->
+            <div id="product-table-slider-bar" class="sticky bottom-0 z-20 w-full bg-surface-container-lowest/95 backdrop-blur-md border-t border-outline-variant/30 px-4 py-2 flex items-center justify-between gap-3 shadow-md">
+                <div class="flex items-center gap-1.5 shrink-0">
+                    <span class="text-xs text-outline font-semibold flex items-center gap-1">
+                        <span class="material-symbols-outlined text-[16px] text-primary">swap_horiz</span>
+                        <span class="hidden sm:inline">Slider:</span>
+                    </span>
+                    <button type="button" onclick="scrollProductTable(-200)" title="Geser Tabel ke Kiri" class="w-7 h-7 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface flex items-center justify-center transition-all cursor-pointer">
+                        <span class="material-symbols-outlined text-[18px]">chevron_left</span>
+                    </button>
+                    <button type="button" onclick="scrollProductTable(200)" title="Geser Tabel ke Kanan" class="w-7 h-7 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface flex items-center justify-center transition-all cursor-pointer">
+                        <span class="material-symbols-outlined text-[18px]">chevron_right</span>
+                    </button>
+                </div>
+
+                <!-- Synchronized Horizontal Scroll Track -->
+                <div id="product-table-track-wrapper" class="flex-1 overflow-x-auto py-1 table-scrollbar-thin">
+                    <div id="product-table-track-dummy" style="height: 1px;"></div>
+                </div>
+
+                <div class="flex items-center gap-1.5 shrink-0 text-xs">
+                    <button type="button" onclick="scrollProductTableTo('start')" class="px-2 py-1 rounded bg-surface-container hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer">
+                        Awal
+                    </button>
+                    <button type="button" onclick="scrollProductTableTo('end')" class="px-2 py-1 rounded bg-surface-container hover:bg-surface-container-high text-primary font-semibold transition-colors cursor-pointer">
+                        Aksi &gt;
+                    </button>
+                </div>
+            </div>
+
+            <!-- Table Pagination & Footer Toolbar -->
+            <div class="px-5 py-3.5 bg-surface-container-low/50 border-t border-outline-variant/30 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs rounded-b-2xl">
+                <!-- Left: Info Data & Per-page Limit selector -->
+                <div class="flex flex-wrap items-center gap-3">
+                    <span class="text-on-surface-variant">
+                        Menampilkan <span class="font-bold font-mono text-on-surface"><?= $startItem ?> - <?= $endItem ?></span> dari <span class="font-bold font-mono text-on-surface"><?= $totalFilteredProducts ?></span> produk
+                    </span>
+                    <div class="flex items-center gap-1.5 border-l border-outline-variant/40 pl-3">
+                        <label for="limit-select" class="text-outline font-semibold">Tampilkan:</label>
+                        <select id="limit-select" onchange="changeLimit(this.value)" class="h-8 px-2 rounded-lg bg-surface-container text-on-surface font-semibold border border-outline-variant/40 focus:ring-1 focus:ring-primary cursor-pointer">
+                            <option value="10" <?= ($limit === 10) ? 'selected' : '' ?>>10 baris</option>
+                            <option value="30" <?= ($limit === 30) ? 'selected' : '' ?>>30 baris</option>
+                            <option value="50" <?= ($limit === 50) ? 'selected' : '' ?>>50 baris</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Right: Pagination Buttons -->
+                <div class="flex items-center gap-1">
+                    <!-- Prev Button -->
+                    <?php if ($page > 1): ?>
+                    <a href="<?= $basePaginationUrl ?>&page=<?= $page - 1 ?>" class="px-2.5 py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface font-semibold transition-colors flex items-center gap-1">
+                        <span class="material-symbols-outlined text-[16px]">chevron_left</span>
+                        <span class="hidden sm:inline">Sebelumnya</span>
+                    </a>
+                    <?php else: ?>
+                    <span class="px-2.5 py-1.5 rounded-lg bg-surface-container/50 text-outline/50 cursor-not-allowed flex items-center gap-1">
+                        <span class="material-symbols-outlined text-[16px]">chevron_left</span>
+                        <span class="hidden sm:inline">Sebelumnya</span>
+                    </span>
+                    <?php endif; ?>
+
+                    <!-- Page Numbers -->
+                    <div class="flex items-center gap-1">
+                        <?php
+                        $maxLinks = 5;
+                        $startPage = max(1, $page - 2);
+                        $endPage = min($totalPages, $startPage + $maxLinks - 1);
+                        if ($endPage - $startPage < $maxLinks - 1) {
+                            $startPage = max(1, $endPage - $maxLinks + 1);
+                        }
+                        if ($startPage > 1) {
+                            echo '<a href="' . $basePaginationUrl . '&page=1" class="w-8 h-8 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface flex items-center justify-center font-bold font-mono">1</a>';
+                            if ($startPage > 2) {
+                                echo '<span class="text-outline px-1">...</span>';
+                            }
+                        }
+                        for ($i = $startPage; $i <= $endPage; $i++) {
+                            if ($i === $page) {
+                                echo '<span class="w-8 h-8 rounded-lg bg-primary text-on-primary font-bold font-mono flex items-center justify-center shadow-xs">' . $i . '</span>';
+                            } else {
+                                echo '<a href="' . $basePaginationUrl . '&page=' . $i . '" class="w-8 h-8 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface flex items-center justify-center font-bold font-mono">' . $i . '</a>';
+                            }
+                        }
+                        if ($endPage < $totalPages) {
+                            if ($endPage < $totalPages - 1) {
+                                echo '<span class="text-outline px-1">...</span>';
+                            }
+                            echo '<a href="' . $basePaginationUrl . '&page=' . $totalPages . '" class="w-8 h-8 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface flex items-center justify-center font-bold font-mono">' . $totalPages . '</a>';
+                        }
+                        ?>
+                    </div>
+
+                    <!-- Next Button -->
+                    <?php if ($page < $totalPages): ?>
+                    <a href="<?= $basePaginationUrl ?>&page=<?= $page + 1 ?>" class="px-2.5 py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface font-semibold transition-colors flex items-center gap-1">
+                        <span class="hidden sm:inline">Berikutnya</span>
+                        <span class="material-symbols-outlined text-[16px]">chevron_right</span>
+                    </a>
+                    <?php else: ?>
+                    <span class="px-2.5 py-1.5 rounded-lg bg-surface-container/50 text-outline/50 cursor-not-allowed flex items-center gap-1">
+                        <span class="hidden sm:inline">Berikutnya</span>
+                        <span class="material-symbols-outlined text-[16px]">chevron_right</span>
+                    </span>
+                    <?php endif; ?>
+                </div>
+            </div>
         </div>
 
         <?php else: ?>
@@ -437,57 +594,59 @@ require_once __DIR__ . '/templates/topbar.php';
                     </button>
                 </div>
 
-                <div class="bg-surface-container-lowest rounded-2xl shadow-sm border border-outline-variant/30 overflow-hidden">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="bg-surface-container-low text-outline font-label-sm text-xs uppercase tracking-wider border-b border-outline-variant/30">
-                                <th class="py-3 px-4">Ikon & Kategori</th>
-                                <th class="py-3 px-4">Kode</th>
-                                <th class="py-3 px-4">Deskripsi</th>
-                                <th class="py-3 px-4 text-center">Jumlah Produk</th>
-                                <th class="py-3 px-4 text-center">Status</th>
-                                <th class="py-3 px-4 text-right">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-outline-variant/20 text-xs">
-                            <?php foreach ($categories as $cat): 
-                                $catJson = htmlspecialchars(json_encode($cat), ENT_QUOTES, 'UTF-8');
-                            ?>
-                            <tr class="hover:bg-surface-container-low/60 transition-colors">
-                                <td class="py-3 px-4 font-semibold text-on-surface flex items-center gap-2.5">
-                                    <div class="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center text-primary">
-                                        <span class="material-symbols-outlined text-[18px]"><?= htmlspecialchars($cat['ikon']) ?></span>
-                                    </div>
-                                    <span><?= htmlspecialchars($cat['nama_kategori']) ?></span>
-                                </td>
-                                <td class="py-3 px-4 font-mono font-bold text-primary">
-                                    <?= htmlspecialchars($cat['kode']) ?>
-                                </td>
-                                <td class="py-3 px-4 text-on-surface-variant max-w-xs truncate">
-                                    <?= htmlspecialchars($cat['deskripsi'] ?: '-') ?>
-                                </td>
-                                <td class="py-3 px-4 text-center font-bold font-mono">
-                                    <?= $cat['total_produk'] ?> Item
-                                </td>
-                                <td class="py-3 px-4 text-center">
-                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold <?= ($cat['status'] === 'aktif') ? 'bg-tertiary-fixed text-on-tertiary-fixed-variant' : 'bg-surface-container text-outline' ?>">
-                                        <?= strtoupper($cat['status']) ?>
-                                    </span>
-                                </td>
-                                <td class="py-3 px-4 text-right">
-                                    <div class="inline-flex items-center gap-1">
-                                        <button type="button" onclick='openEditCategoryModal(<?= $catJson ?>)' class="p-1 rounded-lg text-outline hover:text-primary hover:bg-surface-container">
-                                            <span class="material-symbols-outlined text-[18px]">edit</span>
-                                        </button>
-                                        <a href="api/kategori_action.php?action=delete_kategori&id=<?= $cat['id'] ?>&csrf_token=<?= csrf_token() ?>" onclick="return confirm('Apakah Anda yakin ingin menghapus kategori ini?');" class="p-1 rounded-lg text-outline hover:text-error hover:bg-error-container">
-                                            <span class="material-symbols-outlined text-[18px]">delete</span>
-                                        </a>
-                                    </div>
-                                </td>
-                            </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
+                <div id="tab-content-kategori" class="bg-surface-container-lowest rounded-2xl shadow-sm border border-outline-variant/30 overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse min-w-[700px]">
+                            <thead>
+                                <tr class="bg-surface-container-low text-outline font-label-sm text-xs uppercase tracking-wider border-b border-outline-variant/30">
+                                    <th class="py-3 px-4 whitespace-nowrap">Ikon & Kategori</th>
+                                    <th class="py-3 px-4 whitespace-nowrap">Kode</th>
+                                    <th class="py-3 px-4 min-w-[200px]">Deskripsi</th>
+                                    <th class="py-3 px-4 text-center whitespace-nowrap">Jumlah Produk</th>
+                                    <th class="py-3 px-4 text-center whitespace-nowrap">Status</th>
+                                    <th class="py-3 px-4 text-right whitespace-nowrap">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-outline-variant/20 text-xs">
+                                <?php foreach ($categories as $cat): 
+                                    $catJson = htmlspecialchars(json_encode($cat), ENT_QUOTES, 'UTF-8');
+                                ?>
+                                <tr class="hover:bg-surface-container-low/60 transition-colors">
+                                    <td class="py-3 px-4 font-semibold text-on-surface flex items-center gap-2.5 whitespace-nowrap">
+                                        <div class="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center text-primary">
+                                            <span class="material-symbols-outlined text-[18px]"><?= htmlspecialchars($cat['ikon']) ?></span>
+                                        </div>
+                                        <span><?= htmlspecialchars($cat['nama_kategori']) ?></span>
+                                    </td>
+                                    <td class="py-3 px-4 font-mono font-bold text-primary whitespace-nowrap">
+                                        <?= htmlspecialchars($cat['kode']) ?>
+                                    </td>
+                                    <td class="py-3 px-4 text-on-surface-variant max-w-xs truncate">
+                                        <?= htmlspecialchars($cat['deskripsi'] ?: '-') ?>
+                                    </td>
+                                    <td class="py-3 px-4 text-center font-bold font-mono whitespace-nowrap">
+                                        <?= $cat['total_produk'] ?> Item
+                                    </td>
+                                    <td class="py-3 px-4 text-center whitespace-nowrap">
+                                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold <?= ($cat['status'] === 'aktif') ? 'bg-tertiary-fixed text-on-tertiary-fixed-variant' : 'bg-surface-container text-outline' ?>">
+                                            <?= strtoupper($cat['status']) ?>
+                                        </span>
+                                    </td>
+                                    <td class="py-3 px-4 text-right whitespace-nowrap">
+                                        <div class="inline-flex items-center gap-1">
+                                            <button type="button" onclick='openEditCategoryModal(<?= $catJson ?>)' class="p-1 rounded-lg text-outline hover:text-primary hover:bg-surface-container">
+                                                <span class="material-symbols-outlined text-[18px]">edit</span>
+                                            </button>
+                                            <a href="api/kategori_action.php?action=delete_kategori&id=<?= $cat['id'] ?>&csrf_token=<?= csrf_token() ?>" onclick="return confirm('Apakah Anda yakin ingin menghapus kategori ini?');" class="p-1 rounded-lg text-outline hover:text-error hover:bg-error-container">
+                                                <span class="material-symbols-outlined text-[18px]">delete</span>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
@@ -991,6 +1150,69 @@ require_once __DIR__ . '/templates/topbar.php';
         document.getElementById('batch-action-type').value = actionType;
         document.getElementById('form-batch').submit();
     }
+
+    // Filter Limit Change Handler
+    function changeLimit(newLimit) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('tab', 'produk');
+        url.searchParams.set('limit', newLimit);
+        url.searchParams.set('page', '1');
+        window.location.href = url.toString();
+    }
+
+    // Product Table Horizontal Scroll Slider & Controls
+    function scrollProductTable(delta) {
+        const el = document.getElementById('product-table-container');
+        if (el) el.scrollBy({ left: delta, behavior: 'smooth' });
+    }
+
+    function scrollProductTableTo(pos) {
+        const el = document.getElementById('product-table-container');
+        if (el) el.scrollTo({ left: pos === 'start' ? 0 : el.scrollWidth, behavior: 'smooth' });
+    }
+
+    function initTableScrollSlider() {
+        const tableContainer = document.getElementById('product-table-container');
+        const trackWrapper = document.getElementById('product-table-track-wrapper');
+        const trackDummy = document.getElementById('product-table-track-dummy');
+        const sliderBar = document.getElementById('product-table-slider-bar');
+        if (!tableContainer || !trackWrapper || !trackDummy) return;
+
+        function updateSliderDimensions() {
+            const scrollWidth = tableContainer.scrollWidth;
+            const clientWidth = tableContainer.clientWidth;
+            trackDummy.style.width = scrollWidth + 'px';
+            if (sliderBar) {
+                if (scrollWidth > clientWidth) {
+                    sliderBar.classList.remove('hidden');
+                    sliderBar.classList.add('flex');
+                } else {
+                    sliderBar.classList.add('hidden');
+                    sliderBar.classList.remove('flex');
+                }
+            }
+        }
+
+        let isSyncing = false;
+        tableContainer.addEventListener('scroll', () => {
+            if (isSyncing) return;
+            isSyncing = true;
+            trackWrapper.scrollLeft = tableContainer.scrollLeft;
+            isSyncing = false;
+        });
+
+        trackWrapper.addEventListener('scroll', () => {
+            if (isSyncing) return;
+            isSyncing = true;
+            tableContainer.scrollLeft = trackWrapper.scrollLeft;
+            isSyncing = false;
+        });
+
+        updateSliderDimensions();
+        window.addEventListener('resize', updateSliderDimensions);
+    }
+
+    document.addEventListener('DOMContentLoaded', initTableScrollSlider);
 </script>
 
 <?php require_once __DIR__ . '/templates/footer.php'; ?>

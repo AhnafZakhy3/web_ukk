@@ -98,4 +98,31 @@ function updateThemeIcons() {
   });
 }
 
-document.addEventListener('DOMContentLoaded', updateThemeIcons);
+// Desktop sidebar collapse toggle
+function toggleSidebarCollapse() {
+  const isCollapsed = document.documentElement.classList.toggle('sidebar-collapsed');
+  localStorage.setItem('nusapos_sidebar_collapsed', isCollapsed ? 'true' : 'false');
+  updateSidebarToggleIcon();
+  window.dispatchEvent(new Event('resize'));
+}
+
+function updateSidebarToggleIcon() {
+  const isCollapsed = document.documentElement.classList.contains('sidebar-collapsed');
+  const icon = document.getElementById('desktop-sidebar-toggle-icon');
+  if (icon) {
+    icon.textContent = isCollapsed ? 'menu' : 'menu_open';
+  }
+}
+
+// Global shortcut handler (Ctrl+B / Cmd+B for sidebar toggle)
+document.addEventListener('keydown', (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
+    e.preventDefault();
+    toggleSidebarCollapse();
+  }
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+  updateThemeIcons();
+  updateSidebarToggleIcon();
+});

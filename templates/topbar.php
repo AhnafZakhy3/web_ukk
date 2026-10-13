@@ -15,8 +15,12 @@ $avatarUrl = $user['avatar'] ?: 'https://ui-avatars.com/api/?name=' . urlencode(
     <!-- Left: Hamburger & Status -->
     <div class="flex items-center gap-space-sm lg:gap-space-md">
         <!-- Hamburger button mobile -->
-        <button type="button" onclick="toggleSidebar(true)" aria-label="Buka menu navigasi" class="md:hidden p-2 rounded-xl text-on-surface hover:bg-surface-container transition-colors flex items-center justify-center">
+        <button type="button" onclick="toggleSidebar(true)" aria-label="Buka menu navigasi" class="md:hidden p-2 rounded-xl text-on-surface hover:bg-surface-container transition-colors flex items-center justify-center cursor-pointer">
             <span class="material-symbols-outlined text-[24px]">menu</span>
+        </button>
+        <!-- Desktop Sidebar Toggle Button -->
+        <button type="button" onclick="toggleSidebarCollapse()" id="desktop-sidebar-toggle" aria-label="Sembunyikan / Tampilkan Sidebar" title="Sembunyikan / Tampilkan Sidebar (Ctrl+B)" class="hidden md:flex p-2 rounded-xl text-on-surface hover:bg-surface-container transition-colors items-center justify-center cursor-pointer">
+            <span class="material-symbols-outlined text-[24px]" id="desktop-sidebar-toggle-icon">menu_open</span>
         </button>
         <div class="hidden xl:flex items-center gap-2 bg-surface-container-low px-space-md py-1.5 rounded-lg border border-outline-variant/30">
             <span class="material-symbols-outlined text-[18px] text-outline">keyboard</span>
