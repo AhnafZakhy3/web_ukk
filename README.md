@@ -49,6 +49,9 @@ Aplikasi ini memenuhi seluruh indikator kelulusan **Uji Kompetensi Keahlian (UKK
 - Pemotongan stok dilakukan dengan penguncian baris (`SELECT ... FOR UPDATE`), mencegah kondisi persaingan stok (*race conditions*) atau *overselling*.
 
 ### 📦 4. Manajemen Inventori & Klasifikasi
+- **Unggah Gambar Produk Lokal & URL:** Mendukung upload file foto produk dari perangkat (JPG, PNG, WEBP) maupun input URL gambar eksternal.
+- **Slider Horizontal Ergonomis:** Bilah geser tabel produk dan kategori selalu terjangkau di bagian bawah layar.
+- **Filter Tampilan Baris:** Pengaturan jumlah baris tabel (10, 30, atau 50 produk per halaman) dengan paginasi responsif.
 - Pemantauan level stok multi-indikator: *Tersedia*, *Menipis* (di bawah batas minimum stok), dan *Habis*.
 - Manajemen kategori departemen dan unit kemasan (Pcs, Botol, Pack, Dus, Cup, Kg, Liter).
 - Proteksi integritas relasi: Kategori yang masih menaungi produk tidak dapat dihapus sembarangan.
@@ -62,11 +65,12 @@ Aplikasi ini memenuhi seluruh indikator kelulusan **Uji Kompetensi Keahlian (UKK
 
 ### 👥 6. Manajemen Pengguna & Hak Akses (RBAC)
 - Pemisahan otoritas tegas antara **Administrator** (Katalog, Kategori, Akun, Analitik Laba) dan **Kasir** (Transaksi POS, Cetak Struk, Riwayat).
+- **Foto Profil Mandiri & Topbar:** Seluruh pengguna (Kasir maupun Admin) dapat mengganti foto profil mereka sendiri secara instan dari dropdown topbar.
 - Proteksi *Self-Deletion*: Administrator tidak dapat menghapus atau menonaktifkan akun miliknya sendiri saat sedang bertugas.
 
-### 🌓 7. Dual Theme (Dark / Light Mode) & Anti-FOUC
-- Sakelar tema visual gelap dan terang dengan deteksi preferensi sistem otomatis.
-- Skrip pencegah kedipan (*Anti-FOUC*) di awal halaman untuk transisi visual yang halus dan profesional.
+### 🌓 7. Dual Theme & Penyesuaian Antarmuka
+- Sakelar tema visual gelap dan terang dengan deteksi preferensi sistem otomatis dan anti-kedip (*Anti-FOUC*).
+- **Toggle Collapse Sidebar (<kbd>Ctrl+B</kbd>):** Opsi menyembunyikan sidebar di desktop untuk ruang transaksi kasir maksimal.
 
 ---
 
@@ -103,7 +107,7 @@ Aplikasi ini memenuhi seluruh indikator kelulusan **Uji Kompetensi Keahlian (UKK
    cd c:\ahnaf\web_ukk
    php setup_db.php
    ```
-   *Skrip ini akan otomatis membuat basis data `nusapos_db`, menyusun 7 tabel InnoDB, dan mengisi data awal (seed).*
+   *Skrip ini akan otomatis membuat basis data `nusapos_db`, menyusun 7 tabel InnoDB, dan mengisi data awal (seed). Jika ingin mulai secara bersih tanpa data dummy katalog/transaksi, gunakan flag `php setup_db.php --clean`.*
 
 3. **Buka Aplikasi pada Browser:**
    Akses melalui browser favorit Anda:

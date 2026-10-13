@@ -162,6 +162,7 @@ Sistem menerapkan kendali akses berbasis peran (RBAC) dengan 2 tingkat otoritas 
 | **Proses Checkout & Bayar** | ✅ | ✅ | Eksekusi transaksi atomik, potong stok, cetak struk |
 | **Katalog Produk (Lihat)** | ✅ | ✅ | Melihat daftar barang dan memantau stok |
 | **Katalog Produk (Tambah/Ubah)** | ✅ | ❌ | Tambah barang baru, edit harga beli, harga jual, stok |
+| **Unggah Foto Produk (Lokal / URL)** | ✅ | ❌ | Unggah foto berkas dari komputer (JPG/PNG/WEBP) atau tautan URL |
 | **Katalog Produk (Hapus)** | ✅ | ❌ | Dibatasi: tidak bisa hapus jika sudah ada di riwayat transaksi |
 | **Impor & Ekspor CSV Produk** | ✅ | ❌ | Mengunduh template, ekspor master katalog, unggah CSV massal |
 | **Kategori & Satuan (CRUD)** | ✅ | ❌ | Tambah, ubah, dan hapus departemen/satuan |
@@ -170,14 +171,18 @@ Sistem menerapkan kendali akses berbasis peran (RBAC) dengan 2 tingkat otoritas 
 | **Detail Item Penjualan** | ✅ | ✅ | Membuka modal rincian barang per nomor invoice |
 | **Statistik Omzet & Profit Margin**| ✅ | ❌ | Metrik nominal penjualan, PPN terkumpul, keuntungan kotor |
 | **Manajemen Pengguna (CRUD)** | ✅ | ❌ | Tambah kasir/admin, reset password, toggle status aktif |
+| **Ubah Foto Profil Mandiri** | ✅ | ✅ | Mengganti foto avatar pribadi dari topbar tanpa login ulang |
 | **Proteksi Self-Deletion** | ✅ | N/A | Admin tidak dapat menonaktifkan/menghapus akunnya sendiri |
 | **Dual Theme (Dark/Light)** | ✅ | ✅ | Pengaturan disimpan pada local storage browser |
+| **Toggle Sembunyikan Sidebar** | ✅ | ✅ | Menutup/membuka sidebar (Ctrl+B) untuk ruang kasir ekstra |
 
 ### 3.2 Modul Terminal Kasir (Point of Sale)
 Modul utama untuk kecepatan operasional kasir di meja kasir ritel:
 - **Pencarian Cepat & Barcode Scanning:** Input pencarian mendukung pencarian *fuzzy* nama barang, SKU, dan barcode scanner langsung dengan tombol pintas `F1`.
 - **Kategori Filter Tab:** Tab interaktif kategori produk (*Semua, Minuman, Makanan, Sembako, Rumah Tangga, Tembakau, Kesehatan*).
 - **Keranjang Belanja Real-Time:** Penambahan kuantitas produk dinamis, tombol *increment* (+), *decrement* (-), serta tombol hapus baris.
+- **Isolasi Scroll Ergonomis:** Panel terminal kasir dan grid katalog produk memiliki scrolling independen tanpa gangguan *scroll-chaining*.
+- **Toggle Sidebar Lebar Penuh:** Tombol collapse sidebar (`Ctrl+B`) untuk memaksimalkan area pandang monitor kasir.
 - **Kalkulasi Pajak & Diskon:** PPN 11% dan diskon transaksi dikalkulasi otomatis secara matematis dan transparan.
 - **Modal Pembayaran Interaktif:** Tombol pintas `F2` membuka modal pembayaran dengan 4 pilihan metode:
   1. *Tunai (Cash):* Dilengkapi tombol uang pas dan pecahan cepat (*Rp20.000, Rp50.000, Rp100.000*) serta deteksi uang kurang.
@@ -188,6 +193,9 @@ Modul utama untuk kecepatan operasional kasir di meja kasir ritel:
 
 ### 3.3 Modul Inventori & Manajemen Stok
 Modul pengelolaan ketersediaan barang dan struktur departemen:
+- **Unggah Berkas Gambar Langsung:** Mendukung pemilihan berkas foto produk lokal dari perangkat (JPG, PNG, WEBP maks. 3MB) dengan penyimpanan otomatis di `public/uploads/products/` serta opsi cadangan URL gambar eksternal.
+- **Slider Scrollbar Horizontal Melayang:** Tabel produk dan tabel kategori dilengkapi penanganan overflow ergonomis sehingga bilah geser horizontal selalu terlihat di bagian bawah layar tanpa mengharuskan pengguna menggulir sampai baris data terbawah.
+- **Filter Limit Baris Fleksibel:** Pengguna dapat mengatur tampilan baris per halaman (10, 30, atau 50 item) yang terintegrasi dengan penomoran halaman (*pagination*).
 - **Indikator Status Stok Multi-Level:**
   - *Stok Tersedia:* Label hijau jika stok di atas ambang batas minimum.
   - *Stok Menipis:* Label oranye berkedip jika `stok <= min_stok` dan `stok > 0`.
@@ -205,6 +213,7 @@ Modul transparansi keuangan dan analitik toko:
 ### 3.5 Modul Manajemen Pengguna & Keamanan
 Modul tata kelola personel toko ritel:
 - **Klasifikasi Peran:** Pembuatan akun kasir operasional dan admin toko.
+- **Unggah Foto Avatar & Sinkronisasi Sesi:** Administrator dapat mengunggah foto profil pengguna baru, dan setiap pengguna aktif (Kasir maupun Admin) dapat mengganti foto profil pribadi mereka kapan saja langsung dari tombol "Foto & Profil Saya" di topbar.
 - **Status Akun:** Toggle aktif/nonaktif akun kasir secara instan tanpa menghapus riwayat transaksi lama.
 - **Proteksi Integritas Akun:** Sistem mencegah akun admin yang sedang login menghapus atau menonaktifkan dirinya sendiri untuk menghindari *lockout*.
 
@@ -986,16 +995,19 @@ c:\ahnaf\web_ukk\
 ├── public/
 │   ├── css/
 │   │   └── output.css          # Berkas CSS hasil kompilasi Tailwind CSS v4
-│   └── js/
-│       ├── app.js              # Utilitas global (Toast, theme toggle, modal helper)
-│       └── pos.js              # Engine keranjang POS, shortcut keyboard, kalkulasi
+│   ├── js/
+│   │   ├── app.js              # Utilitas global (Toast, theme toggle, modal helper, sidebar collapse)
+│   │   └── pos.js              # Engine keranjang POS, shortcut keyboard, kalkulasi
+│   └── uploads/
+│       ├── avatars/            # Tempat penyimpanan berkas foto profil pengguna
+│       └── products/           # Tempat penyimpanan berkas gambar produk lokal
 ├── src/
 │   └── input.css               # Berkas sumber CSS Tailwind v4 & kustom utility
 ├── templates/
 │   ├── footer.php              # Layout penutup, kontainer toast & ekstra skrip
 │   ├── header.php              # Layout kepala HTML, anti-FOUC theme script
-│   ├── sidebar.php             # Navigasi utama, indikator menu, tombol theme
-│   └── topbar.php              # Navigasi atas, info shortcut, profil pengguna
+│   ├── sidebar.php             # Navigasi utama, indikator menu, tombol theme & collapse
+│   └── topbar.php              # Navigasi atas, info shortcut, profil pengguna & modal foto
 ├── tests/
 │   └── squad_test.php          # Suite pengujian otomatis CLI (30 skenario uji)
 ├── DOKUMENTASI_PROYEK.md       # Dokumentasi teknis komprehensif & standar UKK
@@ -1007,7 +1019,7 @@ c:\ahnaf\web_ukk\
 ├── logout.php                  # Handler pembersihan sesi dan keluar sistem
 ├── package.json                # Konfigurasi dependensi Tailwind CLI & script build
 ├── pengguna.php                # Halaman antarmuka manajemen pengguna & hak akses
-├── setup_db.php                # Skrip CLI inisialisasi basis data otomatis
+├── setup_db.php                # Skrip CLI inisialisasi basis data otomatis (flag --clean)
 └── transaksi.php               # Halaman laporan riwayat penjualan & analitik
 ```
 
@@ -1018,21 +1030,22 @@ c:\ahnaf\web_ukk\
 | `index.php` | Router | Mengarahkan pengguna: jika sudah login ke `kasir.php`, jika belum ke `login.php`. |
 | `login.php` | View & Auth | Form login interaktif dengan verifikasi Bcrypt, anti-FOUC theme, dan tombol quick-fill akun demo. |
 | `kasir.php` | POS Core | Antarmuka kasir ritel responsif (katalog produk, filter tab, keranjang dinamis, modal pembayaran, modal slip thermal 80mm). |
-| `inventory.php` | Master Data | Manajemen katalog produk dan tab kategori/satuan, indikator stok menipis, modal add/edit/delete. |
+| `inventory.php` | Master Data | Manajemen katalog produk dan tab kategori/satuan, batas limit baris (10/30/50), scrollbar melayang, modal add/edit/delete. |
 | `transaksi.php` | Reporting | Halaman laporan omzet, filter rentang tanggal, eager-loading detail transaksi, ekspor CSV. |
-| `pengguna.php` | User Mgmt | Manajemen user kasir dan admin, reset sandi, toggle status akun, proteksi self-deletion. |
+| `pengguna.php` | User Mgmt | Manajemen user kasir dan admin, upload avatar, reset sandi, toggle status akun, proteksi self-deletion. |
 | `logout.php` | Auth | Menghancurkan sesi pengguna dan menghapus cookie otentikasi. |
-| `setup_db.php` | DB Utility | Menjalankan pembuatan database `nusapos_db`, eksekusi `schema.sql`, dan pengisian `seed.sql`. |
+| `setup_db.php` | DB Utility | Menjalankan pembuatan database `nusapos_db`, eksekusi `schema.sql`, dan pengisian `seed.sql` (opsi `--clean`). |
 | `api/checkout.php` | API Endpoint | Menerima payload belanja, membuka database transaction (`SELECT ... FOR UPDATE`), memotong stok, membuat nomor faktur, dan mereturn data struk. |
 | `api/export.php` | API Endpoint | Mengalirkan data CSV untuk katalog produk, riwayat transaksi, template impor, dan memproses impor file CSV. |
-| `api/produk_action.php`| API Endpoint | Memproses penambahan, pengubahan, dan penghapusan produk dengan proteksi CSRF. |
+| `api/produk_action.php`| API Endpoint | Memproses penambahan/pengubahan produk, upload foto berkas lokal (`public/uploads/products/`), dan validasi CSRF. |
 | `api/kategori_action.php`| API Endpoint | Mengelola CRUD kategori dan unit satuan, memeriksa ketergantungan relasi produk. |
-| `api/pengguna_action.php`| API Endpoint | Mengelola CRUD akun kasir/admin dengan pemeriksaan hak `require_admin()` dan CSRF. |
+| `api/pengguna_action.php`| API Endpoint | Mengelola CRUD akun kasir/admin, upload foto avatar mandiri (`update_my_profile`), hak `require_admin()` dan CSRF. |
 | `config/database.php` | Core Config | Menyediakan koneksi PDO tersentralisasi dengan konfigurasi prepared statement native. |
 | `config/auth.php` | Core Config | Fungsi autentikasi, pengecekan role `is_admin()`, pembuatan CSRF token, format Rupiah, dan profil toko. |
-| `templates/*.php` | UI Component | Templating modular: header (anti-FOUC), topbar (info shortcut), sidebar (navigasi RBAC), footer (toast). |
+| `public/uploads/*` | Static Storage | Direktori penyimpanan berkas gambar yang diunggah pengguna (`avatars/` dan `products/`). |
+| `templates/*.php` | UI Component | Templating modular: header (anti-FOUC), topbar (profil & modal avatar), sidebar (collapse `Ctrl+B`), footer (toast). |
 | `public/js/pos.js` | POS Engine | Logika keranjang belanja, listener shortcut keyboard (F1, F2, F9, Esc), kalkulator kembalian, cetak struk. |
-| `public/js/app.js` | UI Engine | Fungsi toggle tema (Dark/Light mode), notifikasi toast, toggle modal, dan helper mobile drawer. |
+| `public/js/app.js` | UI Engine | Fungsi toggle tema (Dark/Light), collapse sidebar desktop, notifikasi toast, toggle modal, drawer mobile. |
 | `tests/squad_test.php` | Automation Test | Menguji end-to-end 30 skenario (Auth, RBAC, checkout atomicity, overstock, underpayment, CSRF, CSV). |
 
 ---
@@ -1072,11 +1085,17 @@ STATUS DATABASE:
 Inisialisasi database NusaPOS SELESAI DENGAN SUKSES!
 ```
 
+> **Mode Bersih Siap Pakai (`--clean`):**
+> Jika Anda ingin menginisialisasi database secara bersih tanpa data dummy/transaksi contoh (hanya menyertakan akun pengguna, konfigurasi toko, dan satuan unit), jalankan:
+> ```powershell
+> php setup_db.php --clean
+> ```
+
 > **Alternatif Manual via phpMyAdmin:**
 > 1. Buka `http://localhost/phpmyadmin`.
 > 2. Buat database baru bernama `nusapos_db`.
 > 3. Impor berkas `c:\ahnaf\web_ukk\database\schema.sql`.
-> 4. Impor berkas `c:\ahnaf\web_ukk\database\seed.sql`.
+> 4. Impor berkas `c:\ahnaf\web_ukk\database\seed.sql` (atau biarkan kosong jika ingin mulai bersih).
 
 ### 9.3 Kompilasi Aset Tailwind CSS v4
 Berkas CSS produksi telah dikompilasi pada `public/css/output.css`. Jika pengembang ingin melakukan kustomisasi styling pada `src/input.css`:
