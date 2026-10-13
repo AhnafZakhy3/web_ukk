@@ -7,20 +7,111 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../config/auth.php';
 
-// Proteksi Keamanan: Hanya Role Administrator yang dapat memodifikasi akun
-$currentUser = require_admin();
+// Autentikasi Pengguna
+$user = require_login();
 $db = get_db();
 
 $action = $_POST['action'] ?? $_GET['action'] ?? '';
+if ($action === '') {
+    return;
+}
 $csrfToken = $_POST['csrf_token'] ?? $_GET['csrf_token'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? null;
 
 if (!validate_csrf($csrfToken)) {
     $_SESSION['flash_error'] = 'Validasi keamanan CSRF gagal atau sesi Anda kedaluwarsa. Silakan coba kembali.';
-    header('Location: ../pengguna.php');
+    $redirect = $_SERVER['HTTP_REFERER'] ?? '../pengguna.php';
+    header("Location: {$redirect}");
     exit;
 }
 
+/**
+ * Helper untuk menangani unggahan berkas avatar profil dari perangkat atau fallback ke URL
+ */
+function handle_avatar_upload(?array $file, ?string $urlInput, ?string $currentAvatar = null, bool $removeAvatar = false): ?string {
+    if ($removeAvatar) {
+        return null;
+    }
+
+    // 1. Cek berkas upload dari perangkat
+    if ($file && isset($file['error']) && $file['error'] === UPLOAD_ERR_OK && $file['size'] > 0) {
+        // Batas maksimal ukuran 3MB
+        if ($file['size'] > 3 * 1024 * 1024) {
+            throw new Exception("Ukuran berkas foto profil terlalu besar. Maksimal 3MB.");
+        }
+
+        // Validasi tipe MIME aktual berkas
+        $finfo = new finfo(FILEINFO_MIME_TYPE);
+        $mime = $finfo->file($file['tmp_name']);
+        $allowedMimes = [
+            'image/jpeg' => 'jpg',
+            'image/png'  => 'png',
+            'image/webp' => 'webp',
+            'image/gif'  => 'gif',
+        ];
+
+        if (!isset($allowedMimes[$mime])) {
+            throw new Exception("Format berkas foto tidak didukung. Harap gunakan format JPG, PNG, WEBP, atau GIF.");
+        }
+
+        $extension = $allowedMimes[$mime];
+        $uploadDir = __DIR__ . '/../public/uploads/avatars/';
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+
+        $filename = 'avatar_' . date('Ymd_His') . '_' . bin2hex(random_bytes(4)) . '.' . $extension;
+        $targetPath = $uploadDir . $filename;
+
+        if (!move_uploaded_file($file['tmp_name'], $targetPath)) {
+            throw new Exception("Gagal menyimpan berkas foto profil ke direktori server.");
+        }
+
+        return 'public/uploads/avatars/' . $filename;
+    }
+
+    // 2. Jika ada URL teks yang diisi
+    $trimmedUrl = trim($urlInput ?? '');
+    if ($trimmedUrl !== '') {
+        return $trimmedUrl;
+    }
+
+    // 3. Fallback ke avatar lama
+    return $currentAvatar;
+}
+
 try {
+    // Aksi pembaruan profil mandiri (dapat dilakukan oleh kasir maupun admin)
+    if ($action === 'update_my_profile') {
+        $userId      = (int)$user['id'];
+        $namaLengkap = trim($_POST['nama_lengkap'] ?? '');
+        $removeImg   = ($_POST['hapus_avatar'] ?? '0') === '1';
+
+        if ($namaLengkap === '') {
+            throw new Exception("Nama lengkap tidak boleh kosong.");
+        }
+
+        $stmtCurr = $db->prepare("SELECT avatar FROM users WHERE id = ?");
+        $stmtCurr->execute([$userId]);
+        $currentAvatar = $stmtCurr->fetchColumn() ?: null;
+
+        $avatar = handle_avatar_upload($_FILES['avatar_file'] ?? null, $_POST['avatar'] ?? null, $currentAvatar, $removeImg);
+
+        $stmt = $db->prepare("UPDATE users SET nama_lengkap = ?, avatar = ? WHERE id = ?");
+        $stmt->execute([$namaLengkap, $avatar, $userId]);
+
+        // Perbarui sesi aktif
+        $_SESSION['nusapos_user']['nama_lengkap'] = $namaLengkap;
+        $_SESSION['nusapos_user']['avatar'] = $avatar;
+
+        $_SESSION['flash_success'] = "Foto profil dan informasi akun Anda berhasil diperbarui.";
+        $redirect = !empty($_POST['redirect_to']) ? $_POST['redirect_to'] : ($_SERVER['HTTP_REFERER'] ?? '../kasir.php');
+        header("Location: {$redirect}");
+        exit;
+    }
+
+    // Seluruh aksi manajemen akun lainnya mewajibkan hak Administrator
+    $currentUser = require_admin();
+
     if ($action === 'add') {
         $namaLengkap = trim($_POST['nama_lengkap'] ?? '');
         $username    = trim($_POST['username'] ?? '');
@@ -29,7 +120,6 @@ try {
         $role        = ($_POST['role'] ?? 'kasir') === 'admin' ? 'admin' : 'kasir';
         $status      = ($_POST['status'] ?? 'aktif') === 'nonaktif' ? 'nonaktif' : 'aktif';
         $cabang      = trim($_POST['cabang'] ?? 'Cabang Menteng - Jakarta Pusat');
-        $avatar      = trim($_POST['avatar'] ?? '') ?: null;
 
         if ($namaLengkap === '' || $username === '' || $email === '' || $password === '') {
             throw new Exception("Seluruh kolom wajib diisi.");
@@ -41,6 +131,9 @@ try {
         if ($stmtCheck->fetch()) {
             throw new Exception("Nama pengguna atau email sudah terdaftar dalam sistem.");
         }
+
+        // Proses unggah foto profil
+        $avatar = handle_avatar_upload($_FILES['avatar_file'] ?? null, $_POST['avatar'] ?? null, null, false);
 
         $hashPassword = password_hash($password, PASSWORD_BCRYPT);
         $stmt = $db->prepare("
@@ -61,7 +154,7 @@ try {
         $role        = ($_POST['role'] ?? 'kasir') === 'admin' ? 'admin' : 'kasir';
         $status      = ($_POST['status'] ?? 'aktif') === 'nonaktif' ? 'nonaktif' : 'aktif';
         $cabang      = trim($_POST['cabang'] ?? 'Cabang Menteng - Jakarta Pusat');
-        $avatar      = trim($_POST['avatar'] ?? '') ?: null;
+        $removeImg   = ($_POST['hapus_avatar'] ?? '0') === '1';
 
         if ($id <= 0 || $namaLengkap === '' || $username === '' || $email === '') {
             throw new Exception("Data pengguna tidak lengkap.");
@@ -83,6 +176,14 @@ try {
             throw new Exception("Nama pengguna atau email sudah digunakan oleh akun lain.");
         }
 
+        // Ambil avatar lama untuk fallback
+        $stmtCurr = $db->prepare("SELECT avatar FROM users WHERE id = ?");
+        $stmtCurr->execute([$id]);
+        $currentAvatar = $stmtCurr->fetchColumn() ?: null;
+
+        // Proses unggah foto profil baru atau pertahankan lama
+        $avatar = handle_avatar_upload($_FILES['avatar_file'] ?? null, $_POST['avatar'] ?? null, $currentAvatar, $removeImg);
+
         $stmt = $db->prepare("
             UPDATE users SET 
                 username = ?, email = ?, nama_lengkap = ?, 
@@ -90,6 +191,14 @@ try {
             WHERE id = ?
         ");
         $stmt->execute([$username, $email, $namaLengkap, $role, $cabang, $status, $avatar, $id]);
+
+        // Jika mengedit akun diri sendiri, perbarui data sesi
+        if ($id === (int)$currentUser['id']) {
+            $_SESSION['nusapos_user']['nama_lengkap'] = $namaLengkap;
+            $_SESSION['nusapos_user']['username'] = $username;
+            $_SESSION['nusapos_user']['email'] = $email;
+            $_SESSION['nusapos_user']['avatar'] = $avatar;
+        }
 
         $_SESSION['flash_success'] = "Data akun '{$namaLengkap}' berhasil diperbarui.";
         header('Location: ../pengguna.php');
@@ -175,6 +284,7 @@ try {
     }
 } catch (Exception $e) {
     $_SESSION['flash_error'] = $e->getMessage();
-    header('Location: ../pengguna.php');
+    $redirect = !empty($_POST['redirect_to']) ? $_POST['redirect_to'] : ($_SERVER['HTTP_REFERER'] ?? '../pengguna.php');
+    header("Location: {$redirect}");
     exit;
 }

@@ -274,7 +274,7 @@ require_once __DIR__ . '/templates/topbar.php';
             </button>
         </div>
 
-        <form method="POST" action="api/pengguna_action.php" class="p-space-lg overflow-y-auto space-y-4">
+        <form method="POST" action="api/pengguna_action.php" enctype="multipart/form-data" class="p-space-lg overflow-y-auto space-y-4">
             <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
             <input type="hidden" name="action" id="user-form-action" value="add">
             <input type="hidden" name="id" id="user-form-id" value="">
@@ -327,10 +327,39 @@ require_once __DIR__ . '/templates/topbar.php';
                     class="w-full px-3.5 py-2.5 rounded-xl bg-surface-container-low text-xs border border-outline-variant/40">
             </div>
 
-            <div>
-                <label class="block text-xs font-semibold text-on-surface mb-1">URL Avatar (Opsional)</label>
-                <input type="text" name="avatar" id="input-user-avatar" placeholder="https://..."
-                    class="w-full px-3.5 py-2.5 rounded-xl bg-surface-container-low text-xs border border-outline-variant/40">
+            <!-- Foto Profil / Avatar (Unggah File & URL) -->
+            <div class="space-y-2">
+                <label class="block text-xs font-semibold text-on-surface">Foto Profil (Opsional)</label>
+                
+                <div class="flex items-center gap-4 p-3 rounded-xl bg-surface-container-low border border-outline-variant/40">
+                    <!-- Preview Circle -->
+                    <div class="relative w-16 h-16 rounded-full bg-surface-container-high border-2 border-outline-variant/40 flex items-center justify-center overflow-hidden shrink-0 shadow-xs">
+                        <img id="user-avatar-preview" src="" alt="Pratinjau" class="w-full h-full object-cover hidden">
+                        <div id="user-avatar-placeholder" class="flex flex-col items-center justify-center text-on-surface-variant/60">
+                            <span class="material-symbols-outlined text-[32px]">account_circle</span>
+                        </div>
+                        <button type="button" id="btn-remove-avatar" onclick="clearUserAvatar()" title="Hapus Foto" class="absolute inset-0 bg-inverse-surface/65 text-surface hidden items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                            <span class="material-symbols-outlined text-[20px] text-error">delete</span>
+                        </button>
+                    </div>
+
+                    <!-- Upload & URL Controls -->
+                    <div class="flex-1 space-y-2">
+                        <div>
+                            <label class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-highest text-on-surface text-xs font-semibold cursor-pointer border border-outline-variant/50 transition-colors shadow-xs">
+                                <span class="material-symbols-outlined text-[16px] text-primary">upload_file</span>
+                                <span>Pilih Berkas Foto</span>
+                                <input type="file" name="avatar_file" id="input-user-avatar-file" accept="image/jpeg,image/png,image/webp,image/gif" class="hidden" onchange="previewSelectedUserAvatar(this)">
+                            </label>
+                            <span id="user-file-chosen-text" class="text-[11px] text-on-surface-variant ml-2 truncate inline-block max-w-[160px] align-middle">Belum ada file</span>
+                        </div>
+                        <div>
+                            <input type="text" name="avatar" id="input-user-avatar" placeholder="Atau masukkan URL foto eksternal..." oninput="previewUrlUserAvatar(this.value)"
+                                class="w-full px-3 py-1.5 rounded-lg bg-surface-container-lowest text-xs border border-outline-variant/40 focus:outline-none focus:ring-2 focus:ring-primary placeholder:text-outline">
+                        </div>
+                    </div>
+                </div>
+                <input type="hidden" name="hapus_avatar" id="input-hapus-avatar" value="0">
             </div>
 
             <div class="pt-3 border-t border-outline-variant/30 flex items-center justify-end gap-2">
@@ -376,6 +405,71 @@ require_once __DIR__ . '/templates/topbar.php';
 </div>
 
 <script>
+    function previewSelectedUserAvatar(input) {
+        const preview = document.getElementById('user-avatar-preview');
+        const placeholder = document.getElementById('user-avatar-placeholder');
+        const removeBtn = document.getElementById('btn-remove-avatar');
+        const chosenText = document.getElementById('user-file-chosen-text');
+        const hapusInput = document.getElementById('input-hapus-avatar');
+
+        if (input.files && input.files[0]) {
+            const file = input.files[0];
+            chosenText.textContent = file.name;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                preview.src = e.target.result;
+                preview.classList.remove('hidden');
+                placeholder.classList.add('hidden');
+                removeBtn.classList.remove('hidden');
+                removeBtn.classList.add('flex');
+            };
+            reader.readAsDataURL(file);
+            hapusInput.value = '0';
+        }
+    }
+
+    function previewUrlUserAvatar(url) {
+        const preview = document.getElementById('user-avatar-preview');
+        const placeholder = document.getElementById('user-avatar-placeholder');
+        const removeBtn = document.getElementById('btn-remove-avatar');
+        const hapusInput = document.getElementById('input-hapus-avatar');
+
+        const trimmed = (url || '').trim();
+        if (trimmed !== '') {
+            preview.src = trimmed;
+            preview.classList.remove('hidden');
+            placeholder.classList.add('hidden');
+            removeBtn.classList.remove('hidden');
+            removeBtn.classList.add('flex');
+            hapusInput.value = '0';
+        } else {
+            const fileInput = document.getElementById('input-user-avatar-file');
+            if (!fileInput.files || fileInput.files.length === 0) {
+                clearUserAvatar();
+            }
+        }
+    }
+
+    function clearUserAvatar() {
+        const preview = document.getElementById('user-avatar-preview');
+        const placeholder = document.getElementById('user-avatar-placeholder');
+        const removeBtn = document.getElementById('btn-remove-avatar');
+        const fileInput = document.getElementById('input-user-avatar-file');
+        const urlInput = document.getElementById('input-user-avatar');
+        const chosenText = document.getElementById('user-file-chosen-text');
+        const hapusInput = document.getElementById('input-hapus-avatar');
+
+        fileInput.value = '';
+        urlInput.value = '';
+        preview.src = '';
+        preview.classList.add('hidden');
+        placeholder.classList.remove('hidden');
+        removeBtn.classList.add('hidden');
+        removeBtn.classList.remove('flex');
+        chosenText.textContent = 'Belum ada file';
+        hapusInput.value = '1';
+    }
+
     function openAddUserModal() {
         document.getElementById('modal-user-title').textContent = 'Tambah Akun Pengguna';
         document.getElementById('user-form-action').value = 'add';
@@ -389,7 +483,8 @@ require_once __DIR__ . '/templates/topbar.php';
         document.getElementById('input-user-role').value = 'kasir';
         document.getElementById('input-user-status').value = 'aktif';
         document.getElementById('input-user-cabang').value = 'Cabang Menteng - Jakarta Pusat';
-        document.getElementById('input-user-avatar').value = '';
+        clearUserAvatar();
+        document.getElementById('input-hapus-avatar').value = '0';
         openModal('modal-user');
     }
 
@@ -405,7 +500,35 @@ require_once __DIR__ . '/templates/topbar.php';
         document.getElementById('input-user-role').value = user.role;
         document.getElementById('input-user-status').value = user.status;
         document.getElementById('input-user-cabang').value = user.cabang;
-        document.getElementById('input-user-avatar').value = user.avatar || '';
+        document.getElementById('input-hapus-avatar').value = '0';
+        
+        // Reset berkas upload
+        document.getElementById('input-user-avatar-file').value = '';
+        
+        const preview = document.getElementById('user-avatar-preview');
+        const placeholder = document.getElementById('user-avatar-placeholder');
+        const removeBtn = document.getElementById('btn-remove-avatar');
+        const chosenText = document.getElementById('user-file-chosen-text');
+        const urlInput = document.getElementById('input-user-avatar');
+
+        if (user.avatar) {
+            preview.src = user.avatar;
+            preview.classList.remove('hidden');
+            placeholder.classList.add('hidden');
+            removeBtn.classList.remove('hidden');
+            removeBtn.classList.add('flex');
+            chosenText.textContent = user.avatar.startsWith('public/uploads') ? 'Foto lokal tersimpan' : 'URL aktif';
+            urlInput.value = user.avatar.startsWith('http') ? user.avatar : '';
+        } else {
+            preview.src = '';
+            preview.classList.add('hidden');
+            placeholder.classList.remove('hidden');
+            removeBtn.classList.add('hidden');
+            removeBtn.classList.remove('flex');
+            chosenText.textContent = 'Belum ada file';
+            urlInput.value = '';
+        }
+
         openModal('modal-user');
     }
 
