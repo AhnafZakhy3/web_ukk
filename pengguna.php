@@ -1,8 +1,5 @@
 <?php
-/**
- * NusaPOS - Manajemen Akun & Hak Akses
- */
-
+// management pengguna
 declare(strict_types=1);
 
 require_once __DIR__ . '/config/auth.php';
@@ -14,13 +11,11 @@ $toko = get_toko_info();
 
 $db = get_db();
 
-// 1. Statistik Akun
 $totalUsers = (int)$db->query("SELECT COUNT(*) FROM users")->fetchColumn();
 $totalAdmin = (int)$db->query("SELECT COUNT(*) FROM users WHERE role = 'admin'")->fetchColumn();
 $totalKasir = (int)$db->query("SELECT COUNT(*) FROM users WHERE role = 'kasir'")->fetchColumn();
 $totalNonaktif = (int)$db->query("SELECT COUNT(*) FROM users WHERE status = 'nonaktif'")->fetchColumn();
 
-// 2. Filter & Query Users
 $filterRole = $_GET['role'] ?? 'all';
 $filterStatus = $_GET['status'] ?? 'all';
 $searchQuery = trim($_GET['q'] ?? '');
@@ -58,7 +53,6 @@ require_once __DIR__ . '/templates/topbar.php';
 <div class="app-layout-content pl-0 md:pl-64 pt-16 min-h-screen bg-surface">
     <main class="p-space-md lg:p-space-lg space-y-space-lg">
         
-        <!-- Header & Action Area -->
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-space-md">
             <div>
                 <div class="flex items-center gap-2 mb-1">
@@ -78,9 +72,7 @@ require_once __DIR__ . '/templates/topbar.php';
             </button>
         </div>
 
-        <!-- 4 Bento Metric Cards -->
         <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-space-md">
-            <!-- Total Pengguna -->
             <div class="p-space-md bg-surface-container-lowest rounded-2xl shadow-sm border border-outline-variant/30 flex items-start justify-between">
                 <div>
                     <span class="font-label-sm text-xs uppercase tracking-wider text-outline font-semibold">Total Pengguna</span>
@@ -95,7 +87,6 @@ require_once __DIR__ . '/templates/topbar.php';
                 </div>
             </div>
 
-            <!-- Administrator -->
             <div class="p-space-md bg-surface-container-lowest rounded-2xl shadow-sm border border-outline-variant/30 flex items-start justify-between">
                 <div>
                     <span class="font-label-sm text-xs uppercase tracking-wider text-outline font-semibold">Administrator</span>
@@ -110,7 +101,6 @@ require_once __DIR__ . '/templates/topbar.php';
                 </div>
             </div>
 
-            <!-- Kasir Utama -->
             <div class="p-space-md bg-surface-container-lowest rounded-2xl shadow-sm border border-outline-variant/30 flex items-start justify-between">
                 <div>
                     <span class="font-label-sm text-xs uppercase tracking-wider text-outline font-semibold">Kasir & Staf</span>
@@ -125,7 +115,6 @@ require_once __DIR__ . '/templates/topbar.php';
                 </div>
             </div>
 
-            <!-- Akun Nonaktif -->
             <div class="p-space-md bg-surface-container-lowest rounded-2xl shadow-sm border border-outline-variant/30 flex items-start justify-between">
                 <div>
                     <span class="font-label-sm text-xs uppercase tracking-wider text-outline font-semibold">Akun Nonaktif</span>
@@ -141,7 +130,6 @@ require_once __DIR__ . '/templates/topbar.php';
             </div>
         </div>
 
-        <!-- Filter Bar -->
         <div class="bg-surface-container-lowest p-space-md rounded-2xl shadow-sm border border-outline-variant/30">
             <form method="GET" action="pengguna.php" class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                 <div class="relative flex-1">
@@ -169,7 +157,6 @@ require_once __DIR__ . '/templates/topbar.php';
             </form>
         </div>
 
-        <!-- Tabel Pengguna -->
         <div class="bg-surface-container-lowest rounded-2xl shadow-sm border border-outline-variant/30 overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
@@ -190,7 +177,6 @@ require_once __DIR__ . '/templates/topbar.php';
                             $uJson = htmlspecialchars(json_encode($u), ENT_QUOTES, 'UTF-8');
                         ?>
                         <tr class="hover:bg-surface-container-low/60 transition-colors">
-                            <!-- Avatar & Nama -->
                             <td class="py-3 px-4">
                                 <div class="flex items-center gap-3">
                                     <img src="<?= htmlspecialchars($avatar) ?>" alt="Avatar" class="w-9 h-9 rounded-full object-cover ring-2 ring-primary/20">
@@ -200,14 +186,12 @@ require_once __DIR__ . '/templates/topbar.php';
                                     </div>
                                 </div>
                             </td>
-                            <!-- Username & Email -->
                             <td class="py-3 px-4">
                                 <div class="flex flex-col">
                                     <span class="font-mono font-bold text-primary">@<?= htmlspecialchars($u['username']) ?></span>
                                     <span class="text-on-surface-variant"><?= htmlspecialchars($u['email']) ?></span>
                                 </div>
                             </td>
-                            <!-- Peran -->
                             <td class="py-3 px-4">
                                 <?php if ($u['role'] === 'admin'): ?>
                                     <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-secondary-fixed text-on-secondary-fixed font-label-sm text-xs font-semibold">
@@ -221,24 +205,20 @@ require_once __DIR__ . '/templates/topbar.php';
                                     </span>
                                 <?php endif; ?>
                             </td>
-                            <!-- Cabang -->
                             <td class="py-3 px-4 text-on-surface-variant">
                                 <?= htmlspecialchars($u['cabang']) ?>
                             </td>
-                            <!-- Terakhir Login -->
                             <td class="py-3 px-4">
                                 <div class="flex flex-col text-on-surface-variant">
                                     <span><?= $u['last_login'] ? date('d M Y, H:i', strtotime($u['last_login'])) : 'Belum pernah login' ?></span>
                                 </div>
                             </td>
-                            <!-- Status -->
                             <td class="py-3 px-4 text-center">
                                 <a href="api/pengguna_action.php?action=toggle_status&id=<?= $u['id'] ?>&csrf_token=<?= csrf_token() ?>" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full font-semibold <?= ($u['status'] === 'aktif') ? 'bg-tertiary-fixed text-on-tertiary-fixed-variant' : 'bg-surface-container text-outline' ?>">
                                     <span class="w-1.5 h-1.5 rounded-full <?= ($u['status'] === 'aktif') ? 'bg-tertiary' : 'bg-outline' ?>"></span>
                                     <?= ucfirst($u['status']) ?>
                                 </a>
                             </td>
-                            <!-- Aksi -->
                             <td class="py-3 px-4 text-right">
                                 <div class="inline-flex items-center gap-1">
                                     <button type="button" onclick='openEditUserModal(<?= $uJson ?>)' class="p-1.5 rounded-lg text-outline hover:text-primary hover:bg-surface-container transition-colors" title="Ubah Akun">
@@ -262,9 +242,6 @@ require_once __DIR__ . '/templates/topbar.php';
     </main>
 </div>
 
-<!-- ======================================================== -->
-<!-- MODAL TAMBAH / EDIT AKUN PENGGUNA                        -->
-<!-- ======================================================== -->
 <div id="modal-user" class="fixed inset-0 z-50 bg-inverse-surface/65 backdrop-blur-sm hidden items-center justify-center p-4">
     <div class="bg-surface-container-lowest w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden border border-outline-variant/30 flex flex-col max-h-[90vh]">
         <div class="p-space-lg bg-surface-container-low border-b border-outline-variant/30 flex items-center justify-between">
@@ -327,12 +304,10 @@ require_once __DIR__ . '/templates/topbar.php';
                     class="w-full px-3.5 py-2.5 rounded-xl bg-surface-container-low text-xs border border-outline-variant/40">
             </div>
 
-            <!-- Foto Profil / Avatar (Unggah File & URL) -->
             <div class="space-y-2">
                 <label class="block text-xs font-semibold text-on-surface">Foto Profil (Opsional)</label>
                 
                 <div class="flex items-center gap-4 p-3 rounded-xl bg-surface-container-low border border-outline-variant/40">
-                    <!-- Preview Circle -->
                     <div class="relative w-16 h-16 rounded-full bg-surface-container-high border-2 border-outline-variant/40 flex items-center justify-center overflow-hidden shrink-0 shadow-xs">
                         <img id="user-avatar-preview" src="" alt="Pratinjau" class="w-full h-full object-cover hidden">
                         <div id="user-avatar-placeholder" class="flex flex-col items-center justify-center text-on-surface-variant/60">
@@ -343,7 +318,6 @@ require_once __DIR__ . '/templates/topbar.php';
                         </button>
                     </div>
 
-                    <!-- Upload & URL Controls -->
                     <div class="flex-1 space-y-2">
                         <div>
                             <label class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-highest text-on-surface text-xs font-semibold cursor-pointer border border-outline-variant/50 transition-colors shadow-xs">
@@ -370,9 +344,6 @@ require_once __DIR__ . '/templates/topbar.php';
     </div>
 </div>
 
-<!-- ======================================================== -->
-<!-- MODAL RESET PASSWORD                                      -->
-<!-- ======================================================== -->
 <div id="modal-reset-pwd" class="fixed inset-0 z-50 bg-inverse-surface/65 backdrop-blur-sm hidden items-center justify-center p-4">
     <div class="bg-surface-container-lowest w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden border border-outline-variant/30 flex flex-col">
         <div class="p-4 bg-surface-container-low border-b border-outline-variant/30 flex items-center justify-between">
@@ -502,7 +473,6 @@ require_once __DIR__ . '/templates/topbar.php';
         document.getElementById('input-user-cabang').value = user.cabang;
         document.getElementById('input-hapus-avatar').value = '0';
         
-        // Reset berkas upload
         document.getElementById('input-user-avatar-file').value = '';
         
         const preview = document.getElementById('user-avatar-preview');

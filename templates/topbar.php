@@ -1,7 +1,4 @@
 <?php
-/**
- * NusaPOS - Layout Topbar
- */
 declare(strict_types=1);
 
 $user = current_user() ?? [
@@ -12,13 +9,10 @@ $user = current_user() ?? [
 $avatarUrl = $user['avatar'] ?: 'https://ui-avatars.com/api/?name=' . urlencode($user['nama_lengkap']) . '&background=2563EB&color=fff&size=128';
 ?>
 <header class="app-topbar fixed top-0 left-0 md:left-64 right-0 h-16 bg-surface-container-lowest/95 backdrop-blur-md border-b border-outline-variant/40 z-40 px-4 md:px-space-lg flex items-center justify-between shadow-[0_1px_4px_rgba(0,0,0,0.02)]">
-    <!-- Left: Hamburger & Status -->
     <div class="flex items-center gap-space-sm lg:gap-space-md">
-        <!-- Hamburger button mobile -->
         <button type="button" onclick="toggleSidebar(true)" aria-label="Buka menu navigasi" class="md:hidden p-2 rounded-xl text-on-surface hover:bg-surface-container transition-colors flex items-center justify-center cursor-pointer">
             <span class="material-symbols-outlined text-[24px]">menu</span>
         </button>
-        <!-- Desktop Sidebar Toggle Button -->
         <button type="button" onclick="toggleSidebarCollapse()" id="desktop-sidebar-toggle" aria-label="Sembunyikan / Tampilkan Sidebar" title="Sembunyikan / Tampilkan Sidebar (Ctrl+B)" class="hidden md:flex p-2 rounded-xl text-on-surface hover:bg-surface-container transition-colors items-center justify-center cursor-pointer">
             <span class="material-symbols-outlined text-[24px]" id="desktop-sidebar-toggle-icon">menu_open</span>
         </button>
@@ -29,22 +23,17 @@ $avatarUrl = $user['avatar'] ?: 'https://ui-avatars.com/api/?name=' . urlencode(
         </div>
     </div>
 
-    <!-- Right: Profile & Quick Actions -->
     <div class="flex items-center gap-space-md">
-        <!-- Date display -->
         <div class="hidden md:flex items-center gap-1.5 text-on-surface-variant font-label-sm">
             <span class="material-symbols-outlined text-[16px]">calendar_today</span>
             <span><?= date('d M Y') ?></span>
         </div>
 
-        <!-- Theme Toggle Button -->
         <button type="button" onclick="toggleTheme()" title="Ganti Mode Gelap / Terang" aria-label="Ganti Mode Gelap / Terang" class="w-9 h-9 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface transition-all flex items-center justify-center border border-outline-variant/30 hover:scale-105 active:scale-95 shadow-xs cursor-pointer">
             <span class="material-symbols-outlined theme-toggle-icon text-[20px] transition-transform duration-300">dark_mode</span>
         </button>
 
         <div class="h-6 w-px bg-outline-variant/50 hidden md:block"></div>
-
-        <!-- User Profile Pill -->
         <div class="relative group">
             <div class="flex items-center gap-space-sm pl-space-xs cursor-pointer">
                 <img src="<?= htmlspecialchars($avatarUrl) ?>" alt="Profil" class="w-9 h-9 rounded-full object-cover ring-2 ring-primary/20 shadow-sm">
@@ -55,7 +44,6 @@ $avatarUrl = $user['avatar'] ?: 'https://ui-avatars.com/api/?name=' . urlencode(
                 <span class="material-symbols-outlined text-[18px] text-on-surface-variant group-hover:text-on-surface transition-transform group-hover:rotate-180">arrow_drop_down</span>
             </div>
 
-            <!-- Profile Dropdown Menu -->
             <div class="absolute right-0 top-full mt-2 w-56 bg-surface-container-lowest rounded-xl shadow-xl border border-outline-variant/40 py-2 hidden group-hover:block hover:block z-50">
                 <div class="px-4 py-2 border-b border-outline-variant/30">
                     <p class="font-label-sm text-on-surface-variant">Masuk sebagai:</p>
@@ -65,13 +53,11 @@ $avatarUrl = $user['avatar'] ?: 'https://ui-avatars.com/api/?name=' . urlencode(
                     </span>
                 </div>
                 
-                <!-- Profile / Avatar Trigger -->
                 <button type="button" onclick="openMyProfileModal()" class="w-full flex items-center gap-2 px-4 py-2.5 text-on-surface hover:bg-surface-container text-body-sm transition-colors text-left cursor-pointer border-b border-outline-variant/20">
                     <span class="material-symbols-outlined text-[18px] text-primary">account_circle</span>
                     <span>Foto & Profil Saya</span>
                 </button>
 
-                <!-- Quick Toggle inside menu -->
                 <button type="button" onclick="toggleTheme()" class="w-full flex items-center justify-between px-4 py-2.5 text-on-surface hover:bg-surface-container text-body-sm transition-colors text-left cursor-pointer border-b border-outline-variant/20">
                     <span class="flex items-center gap-2">
                         <span class="material-symbols-outlined theme-toggle-icon text-[18px] text-primary">dark_mode</span>
@@ -89,7 +75,6 @@ $avatarUrl = $user['avatar'] ?: 'https://ui-avatars.com/api/?name=' . urlencode(
     </div>
 </header>
 
-<!-- Modal Profil & Foto Saya (Mandiri untuk Kasir & Admin) -->
 <div id="modal-my-profile" class="fixed inset-0 z-50 bg-inverse-surface/65 backdrop-blur-sm hidden items-center justify-center p-4">
     <div class="bg-surface-container-lowest w-full max-w-md rounded-2xl shadow-2xl overflow-hidden border border-outline-variant/30 flex flex-col max-h-[90vh]">
         <div class="p-space-lg bg-surface-container-low border-b border-outline-variant/30 flex items-center justify-between">
@@ -108,7 +93,6 @@ $avatarUrl = $user['avatar'] ?: 'https://ui-avatars.com/api/?name=' . urlencode(
             <input type="hidden" name="redirect_to" value="<?= htmlspecialchars($_SERVER['REQUEST_URI'] ?? '') ?>">
             <input type="hidden" name="hapus_avatar" id="myprofile-hapus-avatar" value="0">
 
-            <!-- Avatar Preview & Upload -->
             <div class="flex flex-col items-center justify-center gap-3 p-4 rounded-2xl bg-surface-container-low border border-outline-variant/40 text-center">
                 <div class="relative w-24 h-24 rounded-full bg-surface-container-high border-4 border-surface shadow-md overflow-hidden shrink-0 group">
                     <img id="myprofile-avatar-preview" src="<?= htmlspecialchars($avatarUrl) ?>" alt="Foto Profil" class="w-full h-full object-cover">
@@ -139,14 +123,12 @@ $avatarUrl = $user['avatar'] ?: 'https://ui-avatars.com/api/?name=' . urlencode(
                 </div>
             </div>
 
-            <!-- Nama Lengkap -->
             <div>
                 <label class="block text-xs font-semibold text-on-surface mb-1">Nama Lengkap *</label>
                 <input type="text" name="nama_lengkap" id="input-myprofile-nama" value="<?= htmlspecialchars($user['nama_lengkap']) ?>" required placeholder="Nama Anda"
                     class="w-full px-3.5 py-2.5 rounded-xl bg-surface-container-low text-xs border border-outline-variant/40 focus:outline-none focus:ring-2 focus:ring-primary text-on-surface">
             </div>
 
-            <!-- Info Akun Non-Editable -->
             <div class="p-3 rounded-xl bg-surface-container-low border border-outline-variant/30 space-y-1.5 text-xs">
                 <div class="flex items-center justify-between text-on-surface-variant">
                     <span>Nama Pengguna:</span>
@@ -179,6 +161,7 @@ $avatarUrl = $user['avatar'] ?: 'https://ui-avatars.com/api/?name=' . urlencode(
 function openMyProfileModal() {
     openModal('modal-my-profile');
 }
+// ini buat handle foto profil kayaknya. 
 function previewMyProfileAvatar(input) {
     if (input.files && input.files[0]) {
         const file = input.files[0];

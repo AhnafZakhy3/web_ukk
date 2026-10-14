@@ -1,4 +1,4 @@
-<?php
+<?php //yang buat ai intine buat setup database otomatis
 /**
  * NusaPOS - Database Setup Runner
  * Menjalankan migrasi DDL dan seeder data awal secara otomatis.
@@ -7,7 +7,7 @@
 $host = '127.0.0.1';
 $user = 'root';
 $pass = '';
-$dbName = 'nusapos_db';
+$dbName = 'nusapos_db_typo';
 
 echo "=== Memulai Inisialisasi Database NusaPOS ===\n";
 
@@ -59,13 +59,13 @@ try {
         $pdo->exec($initSql);
         echo "[OK] Mode Bersih (--clean): Hanya akun pengguna, pengaturan toko, dan satuan unit yang dibuat.\n";
     } else {
-        $seedFile = __DIR__ . '/database/seed.sql';
-        if (!file_exists($seedFile)) {
-            throw new Exception("File seed.sql tidak ditemukan di: {$seedFile}");
-        }
-        $seedSql = file_get_contents($seedFile);
-        $pdo->exec($seedSql);
-        echo "[OK] Data awal (seed lengkap dengan data contoh) berhasil diisikan\n";
+        // $seedFile = __DIR__ . '/database/seed.sql';
+        // if (!file_exists($seedFile)) {
+        //     throw new Exception("File seed.sql tidak ditemukan di: {$seedFile}");
+        // }
+        // $seedSql = file_get_contents($seedFile);
+        // $pdo->exec($seedSql);
+        // echo "[OK] Data awal (seed lengkap dengan data contoh) berhasil diisikan\n";
     }
 
     // 5. Verifikasi ringkas

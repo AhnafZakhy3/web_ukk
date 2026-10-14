@@ -1,7 +1,4 @@
 <?php
-/**
- * NusaPOS - Terminal Kasir (Point of Sale)
- */
 
 declare(strict_types=1);
 
@@ -14,7 +11,6 @@ $toko = get_toko_info();
 
 $db = get_db();
 
-// 1. Ambil Kategori Aktif
 $categories = $db->query("
     SELECT k.*, COUNT(p.id) as total_produk 
     FROM kategori k 
@@ -24,7 +20,6 @@ $categories = $db->query("
     ORDER BY k.nama_kategori ASC
 ")->fetchAll();
 
-// 2. Ambil Semua Produk Aktif
 $products = $db->query("
     SELECT p.*, k.nama_kategori, k.kode as kode_kategori, s.singkatan as satuan_nama
     FROM produk p
@@ -41,13 +36,8 @@ require_once __DIR__ . '/templates/topbar.php';
 
 <div class="app-layout-content pl-0 md:pl-64 pt-16 min-h-screen lg:h-screen lg:overflow-hidden bg-surface">
     <main class="p-space-md lg:p-space-lg lg:h-[calc(100vh-4rem)] lg:overflow-hidden flex flex-col">
-        <!-- Dual Column POS Layout -->
         <div class="grid grid-cols-12 gap-space-md lg:gap-space-lg items-stretch lg:h-full lg:min-h-0 flex-1">
-            
-            <!-- Kolom Kiri: Katalog Produk & Pencarian (Grid 7 ~ 8 Kolom) -->
             <section class="col-span-12 lg:col-span-7 xl:col-span-8 flex flex-col gap-space-md lg:h-full lg:min-h-0">
-                
-                <!-- Search & Filter Bar -->
                 <div class="bg-surface-container-lowest p-space-md rounded-2xl shadow-sm border border-outline-variant/30 space-y-space-md shrink-0">
                     <div class="flex items-center gap-space-sm">
                         <div class="relative flex-1">
@@ -61,7 +51,6 @@ require_once __DIR__ . '/templates/topbar.php';
                         </button>
                     </div>
 
-                    <!-- Category Filter Tabs -->
                     <div class="flex items-center gap-2 overflow-x-auto pb-1" id="category-tabs">
                         <button type="button" onclick="filterCategory('semua', this)" class="cat-tab px-3.5 py-1.5 rounded-full font-label-md text-label-md whitespace-nowrap transition-colors bg-primary-container text-on-primary font-semibold shadow-sm cursor-pointer">
                             Semua (<?= count($products) ?>)
@@ -74,7 +63,6 @@ require_once __DIR__ . '/templates/topbar.php';
                     </div>
                 </div>
 
-                <!-- Product Catalog Grid Container (Scrollable independently) -->
                 <div class="flex-1 lg:overflow-y-auto lg:min-h-0 overscroll-contain pr-1">
                     <div class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-space-md" id="catalog-grid">
                         <?php foreach ($products as $prod): 
@@ -98,7 +86,6 @@ require_once __DIR__ . '/templates/topbar.php';
                             data-stok="<?= $prod['stok'] ?>"
                             data-json='<?= $prodJson ?>'>
                             <div>
-                                <!-- Gambar Produk -->
                                 <div class="relative w-full h-32 rounded-lg bg-surface-container-low overflow-hidden mb-space-sm flex items-center justify-center">
                                     <?php if (!empty($prod['gambar'])): ?>
                                         <img src="<?= htmlspecialchars($prod['gambar']) ?>" alt="<?= htmlspecialchars($prod['nama_produk']) ?>" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
@@ -110,7 +97,6 @@ require_once __DIR__ . '/templates/topbar.php';
                                     </span>
                                 </div>
 
-                                <!-- SKU & Stock Badge -->
                                 <div class="flex items-center justify-between gap-1 mb-1">
                                     <span class="font-label-sm text-xs text-outline font-mono truncate"><?= htmlspecialchars($prod['sku']) ?></span>
                                     <?php if ($isOutOfStock): ?>
@@ -122,13 +108,10 @@ require_once __DIR__ . '/templates/topbar.php';
                                     <?php endif; ?>
                                 </div>
 
-                                <!-- Title -->
                                 <h3 class="font-headline-sm text-sm text-on-surface line-clamp-2 leading-snug font-semibold" title="<?= htmlspecialchars($prod['nama_produk']) ?>">
                                     <?= htmlspecialchars($prod['nama_produk']) ?>
                                 </h3>
                             </div>
-
-                            <!-- Price & Add Button -->
                             <div class="mt-space-md pt-space-xs flex items-center justify-between border-t border-outline-variant/20">
                                 <div>
                                     <span class="font-label-sm text-[11px] text-outline block">Harga</span>
@@ -148,7 +131,6 @@ require_once __DIR__ . '/templates/topbar.php';
                         <?php endforeach; ?>
                     </div>
 
-                    <!-- Empty search state -->
                     <div id="catalog-not-found" class="hidden p-12 text-center bg-surface-container-lowest rounded-2xl border border-outline-variant/30 space-y-3">
                         <span class="material-symbols-outlined text-[48px] text-outline">search_off</span>
                         <h4 class="font-headline-md text-on-surface font-bold">Produk Tidak Ditemukan</h4>
@@ -156,12 +138,8 @@ require_once __DIR__ . '/templates/topbar.php';
                     </div>
                 </div>
             </section>
-
-            <!-- Kolom Kanan: Keranjang Belanja & Checkout (Grid 4 ~ 5 Kolom) -->
             <section class="col-span-12 lg:col-span-5 xl:col-span-4 lg:h-full lg:min-h-0 flex flex-col">
                 <div class="bg-surface-container-lowest rounded-2xl shadow-md border border-outline-variant/30 p-space-md flex flex-col lg:h-full lg:max-h-full min-h-0 justify-between">
-                    
-                    <!-- Cart Header -->
                     <div class="shrink-0">
                         <div class="pb-space-sm border-b border-outline-variant/30">
                             <div class="flex items-center justify-between mb-2">
@@ -180,20 +158,14 @@ require_once __DIR__ . '/templates/topbar.php';
                                 <span class="font-semibold text-outline" id="cart-items-count">0 Item</span>
                             </div>
 
-                            <!-- Pelanggan input -->
                             <div class="mt-2.5">
                                 <input type="text" id="customer-name-input" value="Pelanggan Umum (Walk-In)" placeholder="Nama Pelanggan (opsional)"
                                     class="w-full px-3 py-1.5 rounded-lg bg-surface-container-low text-xs text-on-surface font-body-sm border border-outline-variant/30 focus:outline-none focus:ring-1 focus:ring-primary">
                             </div>
                         </div>
                     </div>
-
-                    <!-- Cart Item List (Scrollable Area) -->
                     <div class="flex-1 overflow-y-auto py-space-sm space-y-space-sm pr-1 overscroll-contain min-h-0" id="cart-item-list">
-                        <!-- Diisi secara dinamis oleh pos.js -->
                     </div>
-
-                    <!-- Cart Empty State -->
                     <div id="cart-empty-state" class="flex-1 flex flex-col items-center justify-center p-6 text-center text-outline space-y-2">
                         <div class="w-16 h-16 rounded-full bg-surface-container flex items-center justify-center text-outline/60 mb-2">
                             <span class="material-symbols-outlined text-[32px]">remove_shopping_cart</span>
@@ -201,8 +173,6 @@ require_once __DIR__ . '/templates/topbar.php';
                         <h4 class="font-headline-sm text-sm font-semibold text-on-surface-variant">Keranjang Masih Kosong</h4>
                         <p class="font-body-sm text-xs max-w-xs text-outline">Pilih produk dari katalog atau pindai barcode untuk menambahkan transaksi belanja.</p>
                     </div>
-
-                    <!-- Cart Footer & Calculation -->
                     <div class="shrink-0 pt-space-sm border-t border-outline-variant/30 space-y-3">
                         <div class="space-y-1.5 font-body-sm text-xs">
                             <div class="flex justify-between text-on-surface-variant">
@@ -223,7 +193,6 @@ require_once __DIR__ . '/templates/topbar.php';
                             </div>
                         </div>
 
-                        <!-- Tombol Bayar -->
                         <button type="button" id="btn-checkout" onclick="openPaymentModal()" disabled
                             class="w-full py-3 px-space-md rounded-xl bg-primary hover:bg-secondary disabled:bg-surface-container disabled:text-outline disabled:cursor-not-allowed text-on-primary font-headline-sm text-base shadow-md transition-all active:scale-[0.99] flex items-center justify-center gap-2">
                             <span class="material-symbols-outlined text-[20px]">payments</span>
@@ -238,12 +207,8 @@ require_once __DIR__ . '/templates/topbar.php';
     </main>
 </div>
 
-<!-- ======================================================== -->
-<!-- MODAL PEMBAYARAN (PAYMENT DIALOG)                        -->
-<!-- ======================================================== -->
 <div id="payment-modal" class="fixed inset-0 z-50 bg-inverse-surface/65 backdrop-blur-sm hidden items-center justify-center p-4">
     <div class="bg-surface-container-lowest w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden border border-outline-variant/30 flex flex-col max-h-[90vh]">
-        <!-- Header Modal -->
         <div class="p-space-lg bg-surface-container-low border-b border-outline-variant/30 flex items-center justify-between">
             <div class="flex items-center gap-space-sm">
                 <div class="w-10 h-10 rounded-xl bg-primary text-on-primary flex items-center justify-center">
@@ -259,9 +224,7 @@ require_once __DIR__ . '/templates/topbar.php';
             </button>
         </div>
 
-        <!-- Body Modal -->
         <div class="p-space-lg overflow-y-auto space-y-space-md">
-            <!-- Ringkasan Tagihan Box -->
             <div class="p-space-md rounded-xl bg-surface-container-low border border-outline-variant/30 flex items-center justify-between">
                 <div>
                     <span class="font-label-sm text-xs text-outline uppercase tracking-wider block font-semibold">Total Tagihan Final</span>
@@ -274,29 +237,29 @@ require_once __DIR__ . '/templates/topbar.php';
                 </div>
             </div>
 
-            <!-- Metode Pembayaran Cards -->
+            
             <div>
                 <span class="font-label-md text-sm text-on-surface font-semibold block mb-2">Metode Pembayaran</span>
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                    <!-- Tunai -->
+                    
                     <button type="button" onclick="selectPaymentMethod('tunai')" data-method="tunai" class="pay-method-card p-3 rounded-xl border border-outline-variant/40 bg-surface-container-lowest hover:bg-surface-container-low transition-all flex flex-col items-center justify-center gap-1.5 cursor-pointer">
                         <span class="material-symbols-outlined text-[28px] text-tertiary">payments</span>
                         <span class="font-label-md text-xs font-bold text-on-surface">Uang Tunai</span>
                         <span class="text-[10px] text-outline">Cash / Nota</span>
                     </button>
-                    <!-- QRIS -->
+
                     <button type="button" onclick="selectPaymentMethod('qris')" data-method="qris" class="pay-method-card p-3 rounded-xl border border-outline-variant/40 bg-surface-container-lowest hover:bg-surface-container-low transition-all flex flex-col items-center justify-center gap-1.5 cursor-pointer">
                         <span class="material-symbols-outlined text-[28px] text-primary">qr_code_scanner</span>
                         <span class="font-label-md text-xs font-bold text-on-surface">QRIS Dinamis</span>
                         <span class="text-[10px] text-outline">Gopay / OVO / Dana</span>
                     </button>
-                    <!-- Debit BCA -->
+
                     <button type="button" onclick="selectPaymentMethod('debit')" data-method="debit" class="pay-method-card p-3 rounded-xl border border-outline-variant/40 bg-surface-container-lowest hover:bg-surface-container-low transition-all flex flex-col items-center justify-center gap-1.5 cursor-pointer">
                         <span class="material-symbols-outlined text-[28px] text-secondary">credit_card</span>
                         <span class="font-label-md text-xs font-bold text-on-surface">Kartu Debit</span>
                         <span class="text-[10px] text-outline">BCA / Mandiri / BRI</span>
                     </button>
-                    <!-- Transfer Bank -->
+                    
                     <button type="button" onclick="selectPaymentMethod('transfer')" data-method="transfer" class="pay-method-card p-3 rounded-xl border border-outline-variant/40 bg-surface-container-lowest hover:bg-surface-container-low transition-all flex flex-col items-center justify-center gap-1.5 cursor-pointer">
                         <span class="material-symbols-outlined text-[28px] text-on-surface-variant">account_balance</span>
                         <span class="font-label-md text-xs font-bold text-on-surface">Transfer Bank</span>
@@ -305,7 +268,6 @@ require_once __DIR__ . '/templates/topbar.php';
                 </div>
             </div>
 
-            <!-- Konten Spesifik Metode: TUNAI -->
             <div id="cash-payment-section" class="space-y-space-sm p-space-md rounded-xl bg-surface-container-low border border-outline-variant/30">
                 <label for="cash-tendered-input" class="font-label-md text-xs text-on-surface font-semibold block">Nominal Uang Diterima (Rp)</label>
                 <div class="relative">
@@ -314,7 +276,6 @@ require_once __DIR__ . '/templates/topbar.php';
                         class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-surface-container-lowest text-on-surface font-mono font-bold text-lg border border-outline-variant/40 focus:outline-none focus:ring-2 focus:ring-primary">
                 </div>
 
-                <!-- Tombol Denominasi Cepat -->
                 <div class="flex items-center gap-2 flex-wrap pt-1">
                     <span class="text-xs text-outline font-semibold">Uang Cepat:</span>
                     <button type="button" onclick="setQuickCash('pas')" class="px-2.5 py-1 rounded-lg bg-surface-container-lowest hover:bg-surface-container text-xs font-semibold text-primary border border-outline-variant/40">Uang Pas</button>
@@ -323,7 +284,6 @@ require_once __DIR__ . '/templates/topbar.php';
                     <button type="button" onclick="setQuickCash(100000)" class="px-2.5 py-1 rounded-lg bg-surface-container-lowest hover:bg-surface-container text-xs font-semibold text-on-surface border border-outline-variant/40">Rp100.000</button>
                 </div>
 
-                <!-- Feedback Kembalian -->
                 <div class="pt-3 border-t border-outline-variant/30 flex items-center justify-between">
                     <span class="font-label-md text-sm text-on-surface font-semibold">Kembalian</span>
                     <div id="cash-change-display" class="font-currency-display text-xl text-tertiary font-bold">Rp0</div>
@@ -334,25 +294,22 @@ require_once __DIR__ . '/templates/topbar.php';
                 </div>
             </div>
 
-            <!-- Konten Spesifik Metode: QRIS -->
             <div id="qris-payment-section" class="hidden p-space-md rounded-xl bg-surface-container-low border border-outline-variant/30 flex flex-col items-center justify-center gap-2 text-center py-6">
                 <div class="w-36 h-36 bg-surface-container-lowest p-2 rounded-xl shadow-inner border border-outline-variant/40 flex items-center justify-center">
                     <svg class="w-full h-full text-on-surface" viewBox="0 0 100 100">
                         <path d="M10,10 h30 v30 h-30 z M15,15 v20 h20 v-20 z M22,22 h6 v6 h-6 z M60,10 h30 v30 h-30 z M65,15 v20 h20 v-20 z M72,22 h6 v6 h-6 z M10,60 h30 v30 h-30 z M15,65 v20 h20 v-20 z M22,72 h6 v6 h-6 z M50,15 h5 v10 h-5 z M50,35 h8 v5 h-8 z M60,50 h10 v8 h-10 z M80,50 h10 v15 h-10 z M50,65 h12 v6 h-12 z M70,70 h8 v8 h-8 z M85,80 h5 v10 h-5 z M60,85 h15 v5 h-15 z M50,85 h5 v5 h-5 z" fill="currentColor"></path>
                     </svg>
                 </div>
-                <span class="font-label-sm text-xs text-on-surface-variant font-semibold">Tunjukkan QRIS ke Pelanggan • Nominal Otomatis Terkunci</span>
+                <span class="font-label-sm text-xs text-on-surface-variant font-semibold">Fitur Belum Dibuat</span>
             </div>
 
-            <!-- Konten Spesifik Metode: DEBIT / TRANSFER -->
             <div id="card-payment-section" class="hidden p-space-md rounded-xl bg-surface-container-low border border-outline-variant/30 text-center py-6 space-y-2">
                 <span class="material-symbols-outlined text-[36px] text-primary">credit_card</span>
                 <p class="font-headline-sm text-sm font-semibold text-on-surface">Gunakan Mesin EDC Kasir</p>
-                <p class="font-body-sm text-xs text-on-surface-variant">Gesek atau masukkan kartu debit pelanggan pada mesin EDC, lalu tekan tombol konfirmasi setelah struk EDC keluar.</p>
+                <p class="font-body-sm text-xs text-on-surface-variant">Fitur Belum Dibuat</p>
             </div>
         </div>
 
-        <!-- Footer Modal -->
         <div class="p-space-lg bg-surface-container-low border-t border-outline-variant/30 flex items-center justify-end gap-space-sm">
             <button type="button" onclick="closePaymentModal()" class="px-5 py-2.5 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md transition-colors">
                 Batal
@@ -365,13 +322,9 @@ require_once __DIR__ . '/templates/topbar.php';
     </div>
 </div>
 
-<!-- ======================================================== -->
-<!-- MODAL SUKSES & CETAK STRUK THERMAL 80MM                  -->
-<!-- ======================================================== -->
 <div id="success-modal" class="fixed inset-0 z-50 bg-inverse-surface/65 backdrop-blur-sm hidden items-center justify-center p-4">
     <div class="bg-surface-container-lowest w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden grid grid-cols-1 md:grid-cols-12 max-h-[90vh] border border-outline-variant/30">
         
-        <!-- Sisi Kiri: Status & Rincian -->
         <div class="md:col-span-6 p-space-xl flex flex-col justify-between bg-surface-container-low">
             <div>
                 <div class="w-14 h-14 rounded-2xl bg-tertiary-fixed text-on-tertiary-fixed-variant flex items-center justify-center mb-space-md shadow-sm">
@@ -383,7 +336,6 @@ require_once __DIR__ . '/templates/topbar.php';
                     Struk penjualan siap dicetak ke printer thermal atau disimpan ke sistem pembukuan.
                 </p>
 
-                <!-- Rincian Nilai -->
                 <div class="mt-space-md p-space-md rounded-xl bg-surface-container-lowest border border-outline-variant/30 space-y-2 text-xs">
                     <div class="flex justify-between">
                         <span class="text-outline">No. Faktur</span>
@@ -412,7 +364,6 @@ require_once __DIR__ . '/templates/topbar.php';
                 </div>
             </div>
 
-            <!-- Tombol Aksi -->
             <div class="mt-space-lg space-y-2">
                 <button type="button" onclick="printReceipt()" class="w-full py-3 px-space-md rounded-xl bg-primary hover:bg-secondary text-on-primary font-headline-sm text-sm flex items-center justify-center gap-2 shadow-md transition-all active:scale-[0.99]">
                     <span class="material-symbols-outlined text-[20px]">print</span>
@@ -425,19 +376,16 @@ require_once __DIR__ . '/templates/topbar.php';
             </div>
         </div>
 
-        <!-- Sisi Kanan: Pratinjau Slip Struk 80mm Realistis -->
         <div class="md:col-span-6 p-space-lg bg-surface-container-highest flex flex-col items-center justify-center overflow-y-auto max-h-[85vh]">
             <span class="font-label-sm text-xs text-outline mb-2 font-semibold">Pratinjau Kertas Struk 80mm</span>
             
             <div id="thermal-print-area" class="w-full max-w-[320px] bg-white text-neutral-900 p-5 rounded-sm shadow-xl font-mono text-xs leading-relaxed border-t-4 border-primary">
-                <!-- Header Toko -->
                 <div class="text-center pb-2.5 border-b border-dashed border-neutral-300">
                     <div class="font-bold text-sm tracking-tight text-neutral-950 uppercase" id="slip-toko">-</div>
                     <div class="text-[10px] text-neutral-600" id="slip-cabang">-</div>
                     <div class="text-[10px] text-neutral-600" id="slip-alamat">-</div>
                 </div>
 
-                <!-- Info Faktur -->
                 <div class="py-2 text-[10px] border-b border-dashed border-neutral-300 text-neutral-600 space-y-0.5">
                     <div class="flex justify-between">
                         <span>No: <strong id="slip-invoice">-</strong></span>
@@ -449,12 +397,8 @@ require_once __DIR__ . '/templates/topbar.php';
                     </div>
                 </div>
 
-                <!-- Daftar Item -->
                 <div class="py-2 border-b border-dashed border-neutral-300 space-y-1.5" id="slip-items">
-                    <!-- Dinamis -->
                 </div>
-
-                <!-- Kalkulasi -->
                 <div class="py-2 space-y-1 border-b border-dashed border-neutral-300 text-[11px]">
                     <div class="flex justify-between text-neutral-600">
                         <span>Subtotal</span>
@@ -482,7 +426,6 @@ require_once __DIR__ . '/templates/topbar.php';
                     </div>
                 </div>
 
-                <!-- Footer Struk -->
                 <div class="text-center pt-2 text-[10px] text-neutral-500">
                     <p><?= htmlspecialchars($toko['printer_footer']) ?></p>
                 </div>

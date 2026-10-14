@@ -1,7 +1,5 @@
 <?php
-/**
- * NusaPOS - Logout Handler
- */
+// logout wak
 declare(strict_types=1);
 
 require_once __DIR__ . '/config/auth.php';

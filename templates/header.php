@@ -1,7 +1,4 @@
 <?php
-/**
- * NusaPOS - Layout Header
- */
 declare(strict_types=1);
 
 if (!isset($pageTitle)) {
@@ -18,7 +15,7 @@ $toko = get_toko_info();
     <title><?= htmlspecialchars($pageTitle) ?> | <?= htmlspecialchars($toko['nama_toko']) ?></title>
     
     <script>
-        // Deteksi dan inisialisasi mode gelap/terang & sidebar collapse sebelum render (Anti-FOUC)
+        // buat mode gelap terang
         (function() {
             const savedTheme = localStorage.getItem('nusapos_theme');
             if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
@@ -33,25 +30,20 @@ $toko = get_toko_info();
         })();
     </script>
     
-    <!-- Google Fonts: Plus Jakarta Sans -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    
-    <!-- Material Symbols Outlined -->
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
-    
-    <!-- Compiled Tailwind CSS -->
     <link rel="stylesheet" href="public/css/output.css">
     
-    <style>
+    <!-- ini buat custom scroll bar kayonge -->
+    <style> 
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
             background-color: var(--color-surface, #faf8ff);
             color: var(--color-on-surface, #131b2e);
             overscroll-behavior: none;
         }
-        /* Custom subtle scrollbar */
         ::-webkit-scrollbar {
             width: 6px;
             height: 6px;

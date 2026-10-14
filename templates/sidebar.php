@@ -1,19 +1,14 @@
 <?php
-/**
- * NusaPOS - Layout Sidebar
- */
 declare(strict_types=1);
 
 $user = current_user();
 $activeMenu = $activeMenu ?? '';
 $toko = get_toko_info();
 ?>
-<!-- Mobile Sidebar Backdrop Overlay -->
 <div id="sidebar-backdrop" onclick="toggleSidebar(false)" class="fixed inset-0 bg-inverse-surface/40 backdrop-blur-xs z-40 hidden md:hidden"></div>
 
 <aside id="app-sidebar" class="fixed left-0 top-0 h-screen w-64 bg-surface-container-lowest border-r border-outline-variant/40 z-50 flex flex-col justify-between shadow-[0_1px_8px_rgba(0,0,0,0.04)] -translate-x-full md:translate-x-0 transition-transform duration-300">
     <div class="flex flex-col">
-        <!-- Brand Header -->
         <div class="p-space-lg border-b border-outline-variant/30 flex items-center justify-between gap-space-sm">
             <div class="flex items-center gap-space-sm min-w-0">
                 <div class="w-10 h-10 rounded-xl bg-primary-container flex items-center justify-center text-on-primary shadow-sm shrink-0">
@@ -27,26 +22,21 @@ $toko = get_toko_info();
                     </span>
                 </div>
             </div>
-            <!-- Desktop collapse button inside sidebar -->
             <button type="button" onclick="toggleSidebarCollapse()" title="Sembunyikan Sidebar (Ctrl+B)" aria-label="Sembunyikan Sidebar" class="hidden md:flex p-1.5 rounded-lg text-outline hover:text-on-surface hover:bg-surface-container transition-colors cursor-pointer shrink-0">
                 <span class="material-symbols-outlined text-[20px]">first_page</span>
             </button>
         </div>
 
-        <!-- Section Label -->
         <div class="px-space-md py-space-sm">
             <span class="font-label-sm text-label-sm uppercase tracking-wider text-outline px-space-sm font-semibold">Navigasi Operasional</span>
         </div>
 
-        <!-- Nav Links -->
         <nav class="px-space-sm space-y-1">
-            <!-- 1. Terminal Kasir -->
             <a href="kasir.php" class="flex items-center gap-space-sm px-space-md py-2.5 rounded-lg transition-all <?= ($activeMenu === 'kasir') ? 'bg-primary-container text-on-primary font-semibold shadow-sm' : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface font-label-lg' ?>">
                 <span class="material-symbols-outlined text-[20px]">point_of_sale</span>
                 <span>Terminal Kasir</span>
             </a>
 
-            <!-- 2. Inventory (Dropdown/Subnav) -->
             <div class="space-y-1">
                 <a href="inventory.php" class="flex items-center justify-between px-space-md py-2.5 rounded-lg transition-all <?= (str_starts_with($activeMenu, 'inventory')) ? 'bg-surface-container text-primary font-semibold' : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface font-label-lg' ?>">
                     <div class="flex items-center gap-space-sm">
@@ -67,7 +57,6 @@ $toko = get_toko_info();
                 </div>
             </div>
 
-            <!-- 3. Manajemen Akun (Khusus Admin atau ditampilkan status) -->
             <?php if (is_admin()): ?>
             <a href="pengguna.php" class="flex items-center gap-space-sm px-space-md py-2.5 rounded-lg transition-all <?= ($activeMenu === 'pengguna') ? 'bg-primary-container text-on-primary font-semibold shadow-sm' : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface font-label-lg' ?>">
                 <span class="material-symbols-outlined text-[20px]">group</span>
@@ -83,7 +72,6 @@ $toko = get_toko_info();
             </div>
             <?php endif; ?>
 
-            <!-- 4. Laporan Transaksi -->
             <a href="transaksi.php" class="flex items-center gap-space-sm px-space-md py-2.5 rounded-lg transition-all <?= ($activeMenu === 'transaksi') ? 'bg-primary-container text-on-primary font-semibold shadow-sm' : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface font-label-lg' ?>">
                 <span class="material-symbols-outlined text-[20px]">bar_chart</span>
                 <span>Laporan Transaksi</span>
@@ -91,7 +79,6 @@ $toko = get_toko_info();
         </nav>
     </div>
 
-    <!-- Bottom: Mode Gelap/Terang & Keluar Sistem -->
     <div class="p-space-md border-t border-outline-variant/30 space-y-2">
         <button type="button" onclick="toggleTheme()" class="w-full flex items-center justify-between px-space-md py-2.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface transition-all font-label-md cursor-pointer border border-outline-variant/30">
             <div class="flex items-center gap-space-sm">

@@ -1,7 +1,5 @@
 <?php
-/**
- * NusaPOS - Laporan Transaksi & Riwayat Penjualan
- */
+//riwayat transaksi
 
 declare(strict_types=1);
 
@@ -14,14 +12,12 @@ $toko = get_toko_info();
 
 $db = get_db();
 
-// 1. Filter Parameters
 $startDate   = $_GET['start_date'] ?? date('Y-m-d', strtotime('-7 days'));
 $endDate     = $_GET['end_date'] ?? date('Y-m-d');
 $searchNo    = trim($_GET['no_invoice'] ?? '');
 $filterUser  = (int)($_GET['user_id'] ?? 0);
 $filterMetode = strtolower(trim($_GET['metode'] ?? 'all'));
 
-// 2. Query Transaksi dengan Filter
 $sql = "
     SELECT t.*, u.nama_lengkap as nama_kasir,
            (SELECT COUNT(*) FROM detail_transaksi dt WHERE dt.transaksi_id = t.id) as item_count,
@@ -56,7 +52,6 @@ $stmt = $db->prepare($sql);
 $stmt->execute($params);
 $transactions = $stmt->fetchAll();
 
-// Eager load detail transaksi untuk menghindari N+1 query problem
 $trxItemsMap = [];
 if (!empty($transactions)) {
     $trxIds = array_column($transactions, 'id');
@@ -68,7 +63,6 @@ if (!empty($transactions)) {
     }
 }
 
-// 3. Kalkulasi Ringkasan Metrik
 $totalOmzet = 0.0;
 $totalTrx = count($transactions);
 $totalItemTerjual = 0;
@@ -80,7 +74,6 @@ foreach ($transactions as $t) {
 
 $aov = ($totalTrx > 0) ? ($totalOmzet / $totalTrx) : 0.0;
 
-// 4. Data Tren Penjualan 7 Hari Terakhir untuk Grafik SVG
 $stmtTrend = $db->query("
     SELECT DATE(created_at) as tgl, SUM(total_akhir) as omzet, COUNT(*) as jml
     FROM transaksi
@@ -108,7 +101,6 @@ for ($i = 6; $i >= 0; $i--) {
     ];
 }
 
-// 5. Daftar Kasir untuk Dropdown Filter
 $cashiers = $db->query("SELECT id, nama_lengkap FROM users ORDER BY nama_lengkap ASC")->fetchAll();
 
 require_once __DIR__ . '/templates/header.php';
@@ -119,7 +111,6 @@ require_once __DIR__ . '/templates/topbar.php';
 <div class="app-layout-content pl-0 md:pl-64 pt-16 min-h-screen bg-surface">
     <main class="p-space-md lg:p-space-lg space-y-space-lg">
         
-        <!-- Header & Action -->
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-space-md">
             <div>
                 <h1 class="font-headline-lg text-2xl text-on-surface font-bold tracking-tight">Laporan Transaksi & Riwayat Penjualan</h1>
@@ -132,9 +123,7 @@ require_once __DIR__ . '/templates/topbar.php';
             </a>
         </div>
 
-        <!-- 4 Bento Metric Cards -->
         <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-space-md">
-            <!-- Total Omzet -->
             <div class="p-space-md bg-surface-container-lowest rounded-2xl shadow-sm border border-outline-variant/30 flex items-start justify-between">
                 <div>
                     <span class="font-label-sm text-xs uppercase tracking-wider text-outline font-semibold">Total Omzet Penjualan</span>
@@ -149,7 +138,6 @@ require_once __DIR__ . '/templates/topbar.php';
                 </div>
             </div>
 
-            <!-- Total Transaksi -->
             <div class="p-space-md bg-surface-container-lowest rounded-2xl shadow-sm border border-outline-variant/30 flex items-start justify-between">
                 <div>
                     <span class="font-label-sm text-xs uppercase tracking-wider text-outline font-semibold">Total Struk Transaksi</span>
@@ -164,7 +152,6 @@ require_once __DIR__ . '/templates/topbar.php';
                 </div>
             </div>
 
-            <!-- Produk Terjual -->
             <div class="p-space-md bg-surface-container-lowest rounded-2xl shadow-sm border border-outline-variant/30 flex items-start justify-between">
                 <div>
                     <span class="font-label-sm text-xs uppercase tracking-wider text-outline font-semibold">Total Item Terjual</span>
@@ -179,7 +166,6 @@ require_once __DIR__ . '/templates/topbar.php';
                 </div>
             </div>
 
-            <!-- Rata-rata Nilai Transaksi (AOV) -->
             <div class="p-space-md bg-surface-container-lowest rounded-2xl shadow-sm border border-outline-variant/30 flex items-start justify-between">
                 <div>
                     <span class="font-label-sm text-xs uppercase tracking-wider text-outline font-semibold">Rata-rata Transaksi (AOV)</span>
@@ -195,7 +181,6 @@ require_once __DIR__ . '/templates/topbar.php';
             </div>
         </div>
 
-        <!-- Grafik Visual Tren Penjualan 7 Hari Terakhir (SVG Modern) -->
         <div class="bg-surface-container-lowest p-space-lg rounded-2xl shadow-sm border border-outline-variant/30 space-y-4">
             <div class="flex items-center justify-between">
                 <div>
@@ -207,7 +192,6 @@ require_once __DIR__ . '/templates/topbar.php';
                 </span>
             </div>
 
-            <!-- SVG Bar Chart -->
             <div class="h-44 w-full flex items-end justify-between gap-3 pt-6 px-2">
                 <?php foreach ($chartDays as $cDay): 
                     $pct = ($maxChartVal > 0) ? round(($cDay['val'] / $maxChartVal) * 100) : 0;
@@ -226,31 +210,26 @@ require_once __DIR__ . '/templates/topbar.php';
             </div>
         </div>
 
-        <!-- Filter Bar -->
         <div class="bg-surface-container-lowest p-space-md rounded-2xl shadow-sm border border-outline-variant/30">
             <form method="GET" action="transaksi.php" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
-                <!-- Tanggal Mulai -->
                 <div>
                     <label class="block text-[11px] font-semibold text-outline mb-1">Tanggal Mulai</label>
                     <input type="date" name="start_date" value="<?= htmlspecialchars($startDate) ?>"
                         class="w-full h-10 px-3 rounded-xl bg-surface-container-low text-xs border border-outline-variant/30">
                 </div>
 
-                <!-- Tanggal Akhir -->
                 <div>
                     <label class="block text-[11px] font-semibold text-outline mb-1">Tanggal Akhir</label>
                     <input type="date" name="end_date" value="<?= htmlspecialchars($endDate) ?>"
                         class="w-full h-10 px-3 rounded-xl bg-surface-container-low text-xs border border-outline-variant/30">
                 </div>
 
-                <!-- No Invoice -->
                 <div>
                     <label class="block text-[11px] font-semibold text-outline mb-1">Cari No. Faktur</label>
                     <input type="text" name="no_invoice" value="<?= htmlspecialchars($searchNo) ?>" placeholder="TRX-..."
                         class="w-full h-10 px-3 rounded-xl bg-surface-container-low font-mono text-xs border border-outline-variant/30">
                 </div>
 
-                <!-- Kasir -->
                 <div>
                     <label class="block text-[11px] font-semibold text-outline mb-1">Pilihan Kasir</label>
                     <select name="user_id" class="w-full h-10 px-3 rounded-xl bg-surface-container-low text-xs border border-outline-variant/30">
@@ -263,7 +242,6 @@ require_once __DIR__ . '/templates/topbar.php';
                     </select>
                 </div>
 
-                <!-- Metode Pembayaran -->
                 <div>
                     <label class="block text-[11px] font-semibold text-outline mb-1">Metode Bayar</label>
                     <select name="metode" class="w-full h-10 px-3 rounded-xl bg-surface-container-low text-xs border border-outline-variant/30">
@@ -275,7 +253,6 @@ require_once __DIR__ . '/templates/topbar.php';
                     </select>
                 </div>
 
-                <!-- Tombol Action -->
                 <div class="flex items-end gap-2">
                     <button type="submit" class="flex-1 h-10 bg-primary hover:bg-secondary text-on-primary rounded-xl font-label-md text-xs shadow-sm flex items-center justify-center gap-1">
                         <span class="material-symbols-outlined text-[16px]">filter_alt</span>
@@ -288,7 +265,6 @@ require_once __DIR__ . '/templates/topbar.php';
             </form>
         </div>
 
-        <!-- Tabel Riwayat Transaksi -->
         <div class="bg-surface-container-lowest rounded-2xl shadow-sm border border-outline-variant/30 overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
@@ -315,7 +291,6 @@ require_once __DIR__ . '/templates/topbar.php';
                         </tr>
                         <?php else: ?>
                         <?php foreach ($transactions as $tr): 
-                            // Gunakan detail items yang telah dieager-load
                             $tItems = $trxItemsMap[$tr['id']] ?? [];
 
                             $tPayload = htmlspecialchars(json_encode([
@@ -381,9 +356,6 @@ require_once __DIR__ . '/templates/topbar.php';
     </main>
 </div>
 
-<!-- ======================================================== -->
-<!-- MODAL DETAIL TRANSAKSI & CETAK STRUK                      -->
-<!-- ======================================================== -->
 <div id="modal-detail-trx" class="fixed inset-0 z-50 bg-inverse-surface/65 backdrop-blur-sm hidden items-center justify-center p-4">
     <div class="bg-surface-container-lowest w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden border border-outline-variant/30 flex flex-col max-h-[90vh]">
         <div class="p-4 bg-surface-container-low border-b border-outline-variant/30 flex items-center justify-between">
@@ -397,7 +369,6 @@ require_once __DIR__ . '/templates/topbar.php';
         </div>
 
         <div class="p-space-lg overflow-y-auto space-y-4">
-            <!-- Metadata -->
             <div class="grid grid-cols-2 gap-2 text-xs bg-surface-container-low p-3 rounded-xl">
                 <div>Kasir: <strong id="dt-kasir" class="text-on-surface">-</strong></div>
                 <div>Waktu: <strong id="dt-time" class="text-on-surface">-</strong></div>
@@ -405,12 +376,8 @@ require_once __DIR__ . '/templates/topbar.php';
                 <div>Metode: <strong id="dt-metode" class="text-primary uppercase">-</strong></div>
             </div>
 
-            <!-- Items Table -->
             <div class="space-y-1.5 border-t border-b border-outline-variant/30 py-3 text-xs" id="dt-items">
-                <!-- Dinamis -->
             </div>
-
-            <!-- Math Summary -->
             <div class="space-y-1 text-xs">
                 <div class="flex justify-between text-on-surface-variant">
                     <span>Subtotal</span>

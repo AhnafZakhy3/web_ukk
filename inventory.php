@@ -1,7 +1,5 @@
 <?php
-/**
- * NusaPOS - Inventory (Katalog Produk & Kategori)
- */
+//page inventory
 
 declare(strict_types=1);
 
@@ -14,13 +12,11 @@ $pageTitle = ($tab === 'kategori') ? 'Manajemen Kategori & Satuan' : 'Inventory 
 
 $db = get_db();
 
-// 1. Data Statistik Produk
 $statTotal = (int)$db->query("SELECT COUNT(*) FROM produk")->fetchColumn();
 $statAktif = (int)$db->query("SELECT COUNT(*) FROM produk WHERE status = 'aktif'")->fetchColumn();
 $statMenipis = (int)$db->query("SELECT COUNT(*) FROM produk WHERE stok > 0 AND stok <= min_stok AND status = 'aktif'")->fetchColumn();
 $statHabis = (int)$db->query("SELECT COUNT(*) FROM produk WHERE stok <= 0 AND status = 'aktif'")->fetchColumn();
 
-// 2. Data Kategori & Satuan
 $categories = $db->query("
     SELECT k.*, COUNT(p.id) as total_produk 
     FROM kategori k 
@@ -31,7 +27,6 @@ $categories = $db->query("
 
 $units = $db->query("SELECT * FROM satuan ORDER BY nama_satuan ASC")->fetchAll();
 
-// 3. Query Produk dengan Filter & Pagination
 $filterCat = $_GET['kategori'] ?? 'all';
 $filterStock = $_GET['stok'] ?? 'all';
 $filterActive = $_GET['status'] ?? 'all';
@@ -67,7 +62,6 @@ if ($searchQuery !== '') {
     $params[':q3'] = "%{$searchQuery}%";
 }
 
-// 4. Hitung Total Data untuk Pagination
 $countSql = "
     SELECT COUNT(*) 
     FROM produk p
@@ -79,7 +73,6 @@ $countStmt = $db->prepare($countSql);
 $countStmt->execute($params);
 $totalFilteredProducts = (int)$countStmt->fetchColumn();
 
-// Filter per-page limit (10, 30, 50 item)
 $allowedLimits = [10, 30, 50];
 $rawLimit = (int)($_GET['limit'] ?? 10);
 $limit = in_array($rawLimit, $allowedLimits, true) ? $rawLimit : 10;
@@ -128,15 +121,12 @@ require_once __DIR__ . '/templates/topbar.php';
 
 <div class="app-layout-content pl-0 md:pl-64 pt-16 min-h-screen bg-surface">
     <main class="p-space-md lg:p-space-lg space-y-space-lg">
-        
-        <!-- Header & Nav Tabs Subhalaman -->
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-space-md border-b border-outline-variant/30 pb-4">
             <div>
                 <h1 class="font-headline-lg text-2xl text-on-surface font-bold tracking-tight">Inventory</h1>
                 <p class="font-body-md text-sm text-on-surface-variant">Kelola katalog produk, harga jual/beli, kategori departemen, dan stok fisik.</p>
             </div>
-            
-            <!-- Subnav Tabs -->
+
             <div class="flex items-center gap-2 bg-surface-container-low p-1.5 rounded-xl border border-outline-variant/30">
                 <a href="inventory.php?tab=produk" class="px-4 py-2 rounded-lg font-label-md text-sm transition-all flex items-center gap-2 <?= ($tab === 'produk') ? 'bg-surface-container-lowest text-primary font-bold shadow-sm' : 'text-on-surface-variant hover:text-on-surface' ?>">
                     <span class="material-symbols-outlined text-[18px]">inventory_2</span>
@@ -150,13 +140,7 @@ require_once __DIR__ . '/templates/topbar.php';
         </div>
 
         <?php if ($tab === 'produk'): ?>
-        <!-- ======================================================== -->
-        <!-- TAB 1: KATALOG PRODUK                                    -->
-        <!-- ======================================================== -->
-
-        <!-- 4 Bento Metric Cards -->
         <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-space-md">
-            <!-- Card 1: Total Produk -->
             <div class="p-space-md bg-surface-container-lowest rounded-2xl shadow-sm border border-outline-variant/30 flex items-start justify-between">
                 <div>
                     <span class="font-label-sm text-xs uppercase tracking-wider text-outline font-semibold">Total Master Produk</span>
@@ -171,7 +155,6 @@ require_once __DIR__ . '/templates/topbar.php';
                 </div>
             </div>
 
-            <!-- Card 2: Produk Aktif -->
             <div class="p-space-md bg-surface-container-lowest rounded-2xl shadow-sm border border-outline-variant/30 flex items-start justify-between">
                 <div>
                     <span class="font-label-sm text-xs uppercase tracking-wider text-outline font-semibold">Produk Siap Jual</span>
@@ -186,7 +169,6 @@ require_once __DIR__ . '/templates/topbar.php';
                 </div>
             </div>
 
-            <!-- Card 3: Stok Menipis -->
             <div class="p-space-md bg-surface-container-lowest rounded-2xl shadow-sm border border-outline-variant/30 flex items-start justify-between">
                 <div>
                     <span class="font-label-sm text-xs uppercase tracking-wider text-outline font-semibold">Peringatan Stok Menipis</span>
@@ -201,7 +183,6 @@ require_once __DIR__ . '/templates/topbar.php';
                 </div>
             </div>
 
-            <!-- Card 4: Stok Habis -->
             <div class="p-space-md bg-surface-container-lowest rounded-2xl shadow-sm border border-outline-variant/30 flex items-start justify-between">
                 <div>
                     <span class="font-label-sm text-xs uppercase tracking-wider text-outline font-semibold">Stok Kosong / Habis</span>
@@ -217,12 +198,9 @@ require_once __DIR__ . '/templates/topbar.php';
             </div>
         </div>
 
-        <!-- Filter Bar & Control Tools -->
         <div class="bg-surface-container-lowest p-space-md rounded-2xl shadow-sm border border-outline-variant/30 space-y-3">
             <form method="GET" action="inventory.php" class="flex flex-col lg:flex-row items-stretch lg:items-center gap-3">
                 <input type="hidden" name="tab" value="produk">
-
-                <!-- Search Field -->
                 <div class="relative flex-1">
                     <span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-outline text-[20px]">search</span>
                     <input type="text" name="q" id="product-search-input" value="<?= htmlspecialchars($searchQuery) ?>"
@@ -230,9 +208,7 @@ require_once __DIR__ . '/templates/topbar.php';
                         class="w-full h-11 pl-11 pr-4 rounded-xl bg-surface-container-low text-on-surface placeholder:text-outline font-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary border border-outline-variant/30 transition-all">
                 </div>
 
-                <!-- Filters -->
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                    <!-- Kategori -->
                     <select name="kategori" class="h-11 px-3 rounded-xl bg-surface-container-low text-on-surface font-label-md text-xs border border-outline-variant/30 focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer">
                         <option value="all">Semua Kategori</option>
                         <?php foreach ($categories as $c): ?>
@@ -242,7 +218,6 @@ require_once __DIR__ . '/templates/topbar.php';
                         <?php endforeach; ?>
                     </select>
 
-                    <!-- Status Stok -->
                     <select name="stok" class="h-11 px-3 rounded-xl bg-surface-container-low text-on-surface font-label-md text-xs border border-outline-variant/30 focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer">
                         <option value="all">Semua Stok</option>
                         <option value="tersedia" <?= ($filterStock === 'tersedia') ? 'selected' : '' ?>>Tersedia</option>
@@ -250,14 +225,12 @@ require_once __DIR__ . '/templates/topbar.php';
                         <option value="habis" <?= ($filterStock === 'habis') ? 'selected' : '' ?>>Stok Habis</option>
                     </select>
 
-                    <!-- Status Keaktifan -->
                     <select name="status" class="h-11 px-3 rounded-xl bg-surface-container-low text-on-surface font-label-md text-xs border border-outline-variant/30 focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer">
                         <option value="all">Semua Status</option>
                         <option value="aktif" <?= ($filterActive === 'aktif') ? 'selected' : '' ?>>Aktif</option>
                         <option value="nonaktif" <?= ($filterActive === 'nonaktif') ? 'selected' : '' ?>>Nonaktif</option>
                     </select>
 
-                    <!-- Filter Limit Baris -->
                     <select name="limit" class="h-11 px-3 rounded-xl bg-surface-container-low text-on-surface font-label-md text-xs border border-outline-variant/30 focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer">
                         <option value="10" <?= ($limit === 10) ? 'selected' : '' ?>>10 / halaman</option>
                         <option value="30" <?= ($limit === 30) ? 'selected' : '' ?>>30 / halaman</option>
@@ -265,7 +238,6 @@ require_once __DIR__ . '/templates/topbar.php';
                     </select>
                 </div>
 
-                <!-- Submit & Reset -->
                 <div class="flex items-center gap-2">
                     <button type="submit" class="h-11 px-4 rounded-xl bg-primary text-on-primary font-label-md text-xs hover:bg-secondary transition-all flex items-center justify-center gap-1.5 shadow-sm">
                         <span class="material-symbols-outlined text-[18px]">filter_alt</span>
@@ -276,10 +248,8 @@ require_once __DIR__ . '/templates/topbar.php';
                     </a>
                 </div>
             </form>
-
-            <!-- Action Buttons: Tambah, Import, Export -->
+            
             <div class="pt-3 border-t border-outline-variant/30 flex flex-wrap items-center justify-between gap-space-sm">
-                <!-- Quick Category Chips -->
                 <div class="flex flex-wrap items-center gap-1.5">
                     <span class="text-xs text-outline font-semibold">Kategori Cepat:</span>
                     <a href="inventory.php?tab=produk&kategori=all&limit=<?= $limit ?>" class="px-2.5 py-1 rounded-full text-xs <?= ($filterCat === 'all') ? 'bg-primary text-on-primary font-bold' : 'bg-surface-container text-on-surface-variant hover:bg-surface-container-high' ?>">Semua</a>
@@ -290,7 +260,6 @@ require_once __DIR__ . '/templates/topbar.php';
                     <?php endforeach; ?>
                 </div>
 
-                <!-- Action Button Group -->
                 <div class="flex items-center gap-2">
                     <button type="button" onclick="openModal('modal-import')" class="px-3.5 py-2 rounded-xl bg-surface-container-low hover:bg-surface-container text-on-surface font-label-md text-xs border border-outline-variant/30 transition-all flex items-center gap-1.5">
                         <span class="material-symbols-outlined text-[18px]">upload_file</span>
@@ -308,10 +277,7 @@ require_once __DIR__ . '/templates/topbar.php';
             </div>
         </div>
 
-        <!-- Master Data Product Table -->
         <div class="bg-surface-container-lowest rounded-2xl shadow-sm border border-outline-variant/30 flex flex-col relative" id="product-table-card">
-            
-            <!-- Batch Action Toolbar -->
             <form id="form-batch" method="POST" action="api/produk_action.php">
                 <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
                 <input type="hidden" name="action" id="batch-action-type" value="batch_delete">
@@ -368,7 +334,6 @@ require_once __DIR__ . '/templates/topbar.php';
                                 <td class="py-3 px-4 text-center">
                                     <input type="checkbox" name="ids[]" value="<?= $p['id'] ?>" class="row-checkbox w-4 h-4 rounded text-primary focus:ring-primary cursor-pointer">
                                 </td>
-                                <!-- Produk & Gambar -->
                                 <td class="py-3 px-4">
                                     <div class="flex items-center gap-3">
                                         <div class="w-12 h-12 rounded-lg bg-surface-container-low flex-shrink-0 overflow-hidden border border-outline-variant/30 flex items-center justify-center">
@@ -388,7 +353,6 @@ require_once __DIR__ . '/templates/topbar.php';
                                         </div>
                                     </div>
                                 </td>
-                                <!-- SKU & Barcode -->
                                 <td class="py-3 px-4">
                                     <div class="flex flex-col">
                                         <span class="font-label-md text-xs text-primary font-bold font-mono"><?= htmlspecialchars($p['sku']) ?></span>
@@ -398,31 +362,25 @@ require_once __DIR__ . '/templates/topbar.php';
                                         </span>
                                     </div>
                                 </td>
-                                <!-- Kategori -->
                                 <td class="py-3 px-4">
                                     <span class="inline-flex items-center px-2.5 py-1 rounded-md bg-surface-container-high text-on-surface-variant font-label-sm text-xs font-semibold">
                                         <?= htmlspecialchars($p['nama_kategori']) ?>
                                     </span>
                                 </td>
-                                <!-- Harga Beli -->
                                 <td class="py-3 px-4 text-right font-mono text-xs text-on-surface-variant">
                                     <?= format_rupiah($buy) ?>
                                 </td>
-                                <!-- Harga Jual -->
                                 <td class="py-3 px-4 text-right font-mono text-xs font-bold text-on-surface">
                                     <?= format_rupiah($sell) ?>
                                 </td>
-                                <!-- Margin -->
                                 <td class="py-3 px-4 text-center">
                                     <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold font-mono <?= ($margin >= 20) ? 'bg-on-tertiary-container/30 text-tertiary' : 'bg-surface-container text-on-surface-variant' ?>">
                                         +<?= $margin ?>%
                                     </span>
                                 </td>
-                                <!-- Stok Fisik -->
                                 <td class="py-3 px-4 text-center font-mono font-bold text-sm text-on-surface">
                                     <?= $stok ?>
                                 </td>
-                                <!-- Status Stok -->
                                 <td class="py-3 px-4 text-center">
                                     <?php if ($stok <= 0): ?>
                                         <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-error-container text-error text-xs font-semibold">
@@ -438,14 +396,12 @@ require_once __DIR__ . '/templates/topbar.php';
                                         </span>
                                     <?php endif; ?>
                                 </td>
-                                <!-- Status Aktif -->
                                 <td class="py-3 px-4 text-center">
                                     <a href="api/produk_action.php?action=toggle_status&id=<?= $p['id'] ?>&csrf_token=<?= csrf_token() ?>" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold <?= ($p['status'] === 'aktif') ? 'bg-tertiary-fixed text-on-tertiary-fixed-variant' : 'bg-surface-container text-outline' ?>">
                                         <span class="w-1.5 h-1.5 rounded-full <?= ($p['status'] === 'aktif') ? 'bg-tertiary' : 'bg-outline' ?>"></span>
                                         <?= ucfirst($p['status']) ?>
                                     </a>
                                 </td>
-                                <!-- Aksi -->
                                 <td class="py-3 px-4 text-right">
                                     <div class="inline-flex items-center gap-1">
                                         <button type="button" onclick='openEditProductModal(<?= $pDataJson ?>)' class="p-1.5 rounded-lg text-outline hover:text-primary hover:bg-surface-container transition-colors" title="Ubah Produk">
@@ -463,8 +419,6 @@ require_once __DIR__ . '/templates/topbar.php';
                     </table>
                 </div>
             </form>
-
-            <!-- Sticky Horizontal Scrollbar Bar at bottom of screen -->
             <div id="product-table-slider-bar" class="sticky bottom-0 z-20 w-full bg-surface-container-lowest/95 backdrop-blur-md border-t border-outline-variant/30 px-4 py-2 flex items-center justify-between gap-3 shadow-md">
                 <div class="flex items-center gap-1.5 shrink-0">
                     <span class="text-xs text-outline font-semibold flex items-center gap-1">
@@ -478,8 +432,6 @@ require_once __DIR__ . '/templates/topbar.php';
                         <span class="material-symbols-outlined text-[18px]">chevron_right</span>
                     </button>
                 </div>
-
-                <!-- Synchronized Horizontal Scroll Track -->
                 <div id="product-table-track-wrapper" class="flex-1 overflow-x-auto py-1 table-scrollbar-thin">
                     <div id="product-table-track-dummy" style="height: 1px;"></div>
                 </div>
@@ -494,9 +446,7 @@ require_once __DIR__ . '/templates/topbar.php';
                 </div>
             </div>
 
-            <!-- Table Pagination & Footer Toolbar -->
             <div class="px-5 py-3.5 bg-surface-container-low/50 border-t border-outline-variant/30 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs rounded-b-2xl">
-                <!-- Left: Info Data & Per-page Limit selector -->
                 <div class="flex flex-wrap items-center gap-3">
                     <span class="text-on-surface-variant">
                         Menampilkan <span class="font-bold font-mono text-on-surface"><?= $startItem ?> - <?= $endItem ?></span> dari <span class="font-bold font-mono text-on-surface"><?= $totalFilteredProducts ?></span> produk
@@ -511,9 +461,7 @@ require_once __DIR__ . '/templates/topbar.php';
                     </div>
                 </div>
 
-                <!-- Right: Pagination Buttons -->
                 <div class="flex items-center gap-1">
-                    <!-- Prev Button -->
                     <?php if ($page > 1): ?>
                     <a href="<?= $basePaginationUrl ?>&page=<?= $page - 1 ?>" class="px-2.5 py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface font-semibold transition-colors flex items-center gap-1">
                         <span class="material-symbols-outlined text-[16px]">chevron_left</span>
@@ -525,8 +473,6 @@ require_once __DIR__ . '/templates/topbar.php';
                         <span class="hidden sm:inline">Sebelumnya</span>
                     </span>
                     <?php endif; ?>
-
-                    <!-- Page Numbers -->
                     <div class="flex items-center gap-1">
                         <?php
                         $maxLinks = 5;
@@ -556,8 +502,6 @@ require_once __DIR__ . '/templates/topbar.php';
                         }
                         ?>
                     </div>
-
-                    <!-- Next Button -->
                     <?php if ($page < $totalPages): ?>
                     <a href="<?= $basePaginationUrl ?>&page=<?= $page + 1 ?>" class="px-2.5 py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface font-semibold transition-colors flex items-center gap-1">
                         <span class="hidden sm:inline">Berikutnya</span>
@@ -574,13 +518,8 @@ require_once __DIR__ . '/templates/topbar.php';
         </div>
 
         <?php else: ?>
-        <!-- ======================================================== -->
-        <!-- TAB 2: KELOLA KATEGORI & SATUAN                          -->
-        <!-- ======================================================== -->
-
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-space-lg items-start">
             
-            <!-- Kolom Kiri: Tabel Kategori (8 Kolom) -->
             <div class="lg:col-span-8 space-y-space-md">
                 <div class="bg-surface-container-lowest p-space-md rounded-2xl shadow-sm border border-outline-variant/30 flex items-center justify-between">
                     <div>
@@ -648,16 +587,12 @@ require_once __DIR__ . '/templates/topbar.php';
                     </div>
                 </div>
             </div>
-
-            <!-- Kolom Kanan: Satuan Unit & Pengaturan (4 Kolom) -->
             <div class="lg:col-span-4 space-y-space-md">
                 <div class="bg-surface-container-lowest p-space-md rounded-2xl shadow-sm border border-outline-variant/30 space-y-4">
                     <div class="border-b border-outline-variant/30 pb-3">
                         <h3 class="font-headline-md text-base text-on-surface font-bold">Satuan Unit Kemasan</h3>
                         <p class="text-xs text-on-surface-variant">Unit acuan produk (Pcs, Botol, Pack, Kg).</p>
                     </div>
-
-                    <!-- Form Tambah Satuan -->
                     <form method="POST" action="api/kategori_action.php" class="space-y-3">
                         <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
                         <input type="hidden" name="action" value="add_satuan">
@@ -673,8 +608,6 @@ require_once __DIR__ . '/templates/topbar.php';
                             + Tambah Satuan Baru
                         </button>
                     </form>
-
-                    <!-- Daftar Satuan -->
                     <div class="pt-3 border-t border-outline-variant/30 space-y-1.5">
                         <span class="text-xs text-outline font-semibold block mb-1">Daftar Satuan Aktif:</span>
                         <?php foreach ($units as $u): ?>
@@ -695,10 +628,6 @@ require_once __DIR__ . '/templates/topbar.php';
 
     </main>
 </div>
-
-<!-- ======================================================== -->
-<!-- MODAL TAMBAH / EDIT PRODUK                               -->
-<!-- ======================================================== -->
 <div id="modal-product" class="fixed inset-0 z-50 bg-inverse-surface/65 backdrop-blur-sm hidden items-center justify-center p-4">
     <div class="bg-surface-container-lowest w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden border border-outline-variant/30 flex flex-col max-h-[90vh]">
         <div class="p-space-lg bg-surface-container-low border-b border-outline-variant/30 flex items-center justify-between">
@@ -714,14 +643,11 @@ require_once __DIR__ . '/templates/topbar.php';
             <input type="hidden" name="id" id="prod-form-id" value="">
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <!-- Nama Produk -->
                 <div class="sm:col-span-2">
                     <label class="block text-xs font-semibold text-on-surface mb-1">Nama Produk *</label>
                     <input type="text" name="nama_produk" id="input-prod-name" required placeholder="Contoh: Kopi Susu Aren Botol 250ml"
                         class="w-full px-3.5 py-2.5 rounded-xl bg-surface-container-low text-xs border border-outline-variant/40 focus:outline-none focus:ring-2 focus:ring-primary">
                 </div>
-
-                <!-- SKU -->
                 <div>
                     <div class="flex justify-between items-center mb-1">
                         <label class="text-xs font-semibold text-on-surface">Kode SKU *</label>
@@ -730,15 +656,11 @@ require_once __DIR__ . '/templates/topbar.php';
                     <input type="text" name="sku" id="input-prod-sku" required placeholder="SKU-MNM-001"
                         class="w-full px-3.5 py-2.5 rounded-xl bg-surface-container-low font-mono text-xs border border-outline-variant/40 focus:outline-none focus:ring-2 focus:ring-primary">
                 </div>
-
-                <!-- Barcode -->
                 <div>
                     <label class="block text-xs font-semibold text-on-surface mb-1">Barcode (Opsional)</label>
                     <input type="text" name="barcode" id="input-prod-barcode" placeholder="899276100142"
                         class="w-full px-3.5 py-2.5 rounded-xl bg-surface-container-low font-mono text-xs border border-outline-variant/40 focus:outline-none focus:ring-2 focus:ring-primary">
                 </div>
-
-                <!-- Kategori -->
                 <div>
                     <label class="block text-xs font-semibold text-on-surface mb-1">Kategori *</label>
                     <select name="kategori_id" id="input-prod-cat" required class="w-full px-3.5 py-2.5 rounded-xl bg-surface-container-low text-xs border border-outline-variant/40 focus:outline-none focus:ring-2 focus:ring-primary">
@@ -747,8 +669,6 @@ require_once __DIR__ . '/templates/topbar.php';
                         <?php endforeach; ?>
                     </select>
                 </div>
-
-                <!-- Satuan -->
                 <div>
                     <label class="block text-xs font-semibold text-on-surface mb-1">Satuan Unit</label>
                     <select name="satuan_id" id="input-prod-unit" class="w-full px-3.5 py-2.5 rounded-xl bg-surface-container-low text-xs border border-outline-variant/40 focus:outline-none focus:ring-2 focus:ring-primary">
@@ -758,15 +678,11 @@ require_once __DIR__ . '/templates/topbar.php';
                         <?php endforeach; ?>
                     </select>
                 </div>
-
-                <!-- Harga Beli -->
                 <div>
                     <label class="block text-xs font-semibold text-on-surface mb-1">Harga Beli / Modal (Rp) *</label>
                     <input type="number" name="harga_beli" id="input-prod-buy" required step="100" min="0" value="0" oninput="calcMargin()"
                         class="w-full px-3.5 py-2.5 rounded-xl bg-surface-container-low font-mono text-xs border border-outline-variant/40 focus:outline-none focus:ring-2 focus:ring-primary">
                 </div>
-
-                <!-- Harga Jual -->
                 <div>
                     <div class="flex justify-between items-center mb-1">
                         <label class="text-xs font-semibold text-on-surface">Harga Jual Kasir (Rp) *</label>
@@ -775,27 +691,21 @@ require_once __DIR__ . '/templates/topbar.php';
                     <input type="number" name="harga_jual" id="input-prod-sell" required step="100" min="0" value="0" oninput="calcMargin()"
                         class="w-full px-3.5 py-2.5 rounded-xl bg-surface-container-low font-mono text-xs border border-outline-variant/40 focus:outline-none focus:ring-2 focus:ring-primary">
                 </div>
-
-                <!-- Stok Awal -->
                 <div>
                     <label class="block text-xs font-semibold text-on-surface mb-1">Stok Fisik Awal *</label>
                     <input type="number" name="stok" id="input-prod-stock" required min="0" value="10"
                         class="w-full px-3.5 py-2.5 rounded-xl bg-surface-container-low font-mono text-xs border border-outline-variant/40 focus:outline-none focus:ring-2 focus:ring-primary">
                 </div>
-
-                <!-- Minimum Stok Alert -->
                 <div>
                     <label class="block text-xs font-semibold text-on-surface mb-1">Batas Minimum Peringatan Stok</label>
                     <input type="number" name="min_stok" id="input-prod-min-stock" min="1" value="5"
                         class="w-full px-3.5 py-2.5 rounded-xl bg-surface-container-low font-mono text-xs border border-outline-variant/40 focus:outline-none focus:ring-2 focus:ring-primary">
                 </div>
-
-                <!-- Foto / Gambar Produk (Upload File & URL) -->
                 <div class="sm:col-span-2 space-y-2">
                     <label class="block text-xs font-semibold text-on-surface">Foto / Gambar Produk (Opsional)</label>
                     
                     <div class="flex flex-col sm:flex-row gap-4 items-start p-3.5 rounded-xl bg-surface-container-low border border-outline-variant/40">
-                        <!-- Preview Box -->
+
                         <div class="w-24 h-24 rounded-xl bg-surface-container-high border border-outline-variant/40 flex items-center justify-center overflow-hidden shrink-0 relative">
                             <img id="prod-img-preview" src="" alt="Pratinjau" class="w-full h-full object-cover hidden">
                             <div id="prod-img-placeholder" class="flex flex-col items-center justify-center text-on-surface-variant/60">
@@ -806,10 +716,7 @@ require_once __DIR__ . '/templates/topbar.php';
                                 <span class="material-symbols-outlined text-[14px]">close</span>
                             </button>
                         </div>
-
-                        <!-- Upload & URL Controls -->
                         <div class="flex-1 space-y-2.5 w-full">
-                            <!-- File Upload Input -->
                             <div>
                                 <label class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-highest text-on-surface text-xs font-semibold cursor-pointer border border-outline-variant/50 transition-colors shadow-xs">
                                     <span class="material-symbols-outlined text-[18px] text-primary">upload_file</span>
@@ -820,7 +727,6 @@ require_once __DIR__ . '/templates/topbar.php';
                                 <p class="text-[10px] text-on-surface-variant/70 mt-1">Mendukung format JPG, PNG, WEBP, atau GIF (Maks. 3 MB)</p>
                             </div>
 
-                            <!-- Or URL Fallback Input -->
                             <div class="pt-2 border-t border-outline-variant/30">
                                 <label for="input-prod-img" class="block text-[11px] text-on-surface-variant mb-1">Atau tempel URL gambar eksternal:</label>
                                 <input type="text" name="gambar" id="input-prod-img" placeholder="https://..." oninput="previewUrlImage(this.value)"
@@ -831,7 +737,6 @@ require_once __DIR__ . '/templates/topbar.php';
                     <input type="hidden" name="hapus_gambar" id="input-hapus-gambar" value="0">
                 </div>
 
-                <!-- Status Produk -->
                 <div class="sm:col-span-2">
                     <label class="block text-xs font-semibold text-on-surface mb-1">Status Keaktifan</label>
                     <select name="status" id="input-prod-status" class="w-full px-3.5 py-2.5 rounded-xl bg-surface-container-low text-xs border border-outline-variant/40">
@@ -849,9 +754,6 @@ require_once __DIR__ . '/templates/topbar.php';
     </div>
 </div>
 
-<!-- ======================================================== -->
-<!-- MODAL TAMBAH / EDIT KATEGORI                             -->
-<!-- ======================================================== -->
 <div id="modal-category" class="fixed inset-0 z-50 bg-inverse-surface/65 backdrop-blur-sm hidden items-center justify-center p-4">
     <div class="bg-surface-container-lowest w-full max-w-md rounded-2xl shadow-2xl overflow-hidden border border-outline-variant/30 flex flex-col">
         <div class="p-space-lg bg-surface-container-low border-b border-outline-variant/30 flex items-center justify-between">
@@ -902,9 +804,6 @@ require_once __DIR__ . '/templates/topbar.php';
     </div>
 </div>
 
-<!-- ======================================================== -->
-<!-- MODAL IMPORT PRODUK (CSV)                                 -->
-<!-- ======================================================== -->
 <div id="modal-import" class="fixed inset-0 z-50 bg-inverse-surface/65 backdrop-blur-sm hidden items-center justify-center p-4">
     <div class="bg-surface-container-lowest w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden border border-outline-variant/30 flex flex-col">
         <div class="p-space-lg bg-surface-container-low border-b border-outline-variant/30 flex items-center justify-between">
@@ -943,7 +842,6 @@ require_once __DIR__ . '/templates/topbar.php';
 </div>
 
 <script>
-    // Margin preview calculator
     function calcMargin() {
         const buy = parseFloat(document.getElementById('input-prod-buy').value) || 0;
         const sell = parseFloat(document.getElementById('input-prod-sell').value) || 0;
@@ -956,7 +854,6 @@ require_once __DIR__ . '/templates/topbar.php';
         }
     }
 
-    // SKU auto generator
     function generateSku() {
         const catSelect = document.getElementById('input-prod-cat');
         const catText = catSelect.options[catSelect.selectedIndex].text.substring(0, 3).toUpperCase();
@@ -964,7 +861,6 @@ require_once __DIR__ . '/templates/topbar.php';
         document.getElementById('input-prod-sku').value = `SKU-${catText}-${rand}`;
     }
 
-    // Image Preview & Upload Helpers
     function previewSelectedFile(input) {
         const preview = document.getElementById('prod-img-preview');
         const placeholder = document.getElementById('prod-img-placeholder');
@@ -1027,7 +923,6 @@ require_once __DIR__ . '/templates/topbar.php';
         hapusInput.value = '1';
     }
 
-    // Modal Add Product
     function openAddProductModal() {
         document.getElementById('modal-prod-title').textContent = 'Tambah Produk Baru';
         document.getElementById('prod-form-action').value = 'add';
@@ -1045,7 +940,6 @@ require_once __DIR__ . '/templates/topbar.php';
         openModal('modal-product');
     }
 
-    // Modal Edit Product
     function openEditProductModal(prod) {
         document.getElementById('modal-prod-title').textContent = 'Edit Informasi Produk';
         document.getElementById('prod-form-action').value = 'edit';
@@ -1062,7 +956,6 @@ require_once __DIR__ . '/templates/topbar.php';
         document.getElementById('input-prod-status').value = prod.status;
         document.getElementById('input-hapus-gambar').value = '0';
         
-        // Reset file upload
         document.getElementById('input-prod-file').value = '';
         
         const preview = document.getElementById('prod-img-preview');
@@ -1091,7 +984,6 @@ require_once __DIR__ . '/templates/topbar.php';
         openModal('modal-product');
     }
 
-    // Category Modals
     function openAddCategoryModal() {
         document.getElementById('modal-cat-title').textContent = 'Tambah Kategori Baru';
         document.getElementById('cat-form-action').value = 'add_kategori';
@@ -1115,7 +1007,6 @@ require_once __DIR__ . '/templates/topbar.php';
         openModal('modal-category');
     }
 
-    // Batch Actions logic
     const checkAll = document.getElementById('check-all');
     const rowCheckboxes = document.querySelectorAll('.row-checkbox');
     const batchBar = document.getElementById('batch-bar');
@@ -1150,7 +1041,6 @@ require_once __DIR__ . '/templates/topbar.php';
         document.getElementById('form-batch').submit();
     }
 
-    // Filter Limit Change Handler
     function changeLimit(newLimit) {
         const url = new URL(window.location.href);
         url.searchParams.set('tab', 'produk');
@@ -1159,7 +1049,6 @@ require_once __DIR__ . '/templates/topbar.php';
         window.location.href = url.toString();
     }
 
-    // Product Table Horizontal Scroll Slider & Controls
     function scrollProductTable(delta) {
         const el = document.getElementById('product-table-container');
         if (el) el.scrollBy({ left: delta, behavior: 'smooth' });
@@ -1181,7 +1070,6 @@ require_once __DIR__ . '/templates/topbar.php';
             const scrollWidth = tableContainer.scrollWidth;
             const clientWidth = tableContainer.clientWidth;
             const maxScroll = Math.max(0, scrollWidth - clientWidth);
-            // 1:1 exact pixel synchronization between track dummy and table scroll range
             trackDummy.style.width = (trackWrapper.clientWidth + maxScroll) + 'px';
             if (sliderBar) {
                 if (maxScroll > 0) {
@@ -1226,3 +1114,5 @@ require_once __DIR__ . '/templates/topbar.php';
 </script>
 
 <?php require_once __DIR__ . '/templates/footer.php'; ?>
+
+<!-- walawe panjang men wok -->

@@ -1,7 +1,5 @@
 <?php
-/**
- * NusaPOS - Halaman Login Kasir & Admin
- */
+// login boy
 declare(strict_types=1);
 
 require_once __DIR__ . '/config/auth.php';
@@ -79,7 +77,6 @@ $toko = get_toko_info();
 </head>
 <body class="bg-surface font-body-md text-on-surface antialiased min-h-screen flex items-center justify-center p-space-md sm:p-space-lg relative">
 
-<!-- Floating Theme Toggle Button -->
 <div class="fixed top-4 right-4 z-50">
     <button type="button" onclick="toggleTheme()" title="Ganti Mode Gelap / Terang" aria-label="Ganti Mode Gelap / Terang" class="w-10 h-10 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface transition-all flex items-center justify-center border border-outline-variant/40 shadow-md hover:scale-105 active:scale-95 cursor-pointer">
         <span class="material-symbols-outlined theme-toggle-icon text-[20px]">dark_mode</span>
@@ -88,10 +85,8 @@ $toko = get_toko_info();
 
 <div class="relative w-full max-w-5xl bg-surface-container-lowest rounded-2xl shadow-xl overflow-hidden grid grid-cols-1 lg:grid-cols-12 min-h-[600px] border border-outline-variant/30">
     
-    <!-- Sisi Kiri: Branding & Informasi Sistem -->
     <div class="lg:col-span-5 bg-gradient-to-br from-primary via-primary-container to-secondary p-space-xl text-on-primary flex flex-col justify-between relative overflow-hidden">
         <div class="relative z-10 space-y-space-lg">
-            <!-- Brand Mark -->
             <div class="flex items-center gap-space-md">
                 <div class="w-12 h-12 rounded-xl bg-surface-container-lowest shadow-md flex items-center justify-center text-primary-container shrink-0">
                     <span class="material-symbols-outlined text-[28px]">point_of_sale</span>
@@ -125,7 +120,6 @@ $toko = get_toko_info();
         </div>
     </div>
 
-    <!-- Sisi Kanan: Formulir Login -->
     <div class="lg:col-span-7 p-space-xl sm:p-12 flex flex-col justify-between bg-surface-container-lowest">
         <div>
             <div class="space-y-1 mb-8">
@@ -133,7 +127,6 @@ $toko = get_toko_info();
                 <p class="font-body-md text-body-md text-on-surface-variant">Silakan masukkan nama pengguna atau email untuk memulai shift kasir.</p>
             </div>
 
-            <!-- Pesan Error Validasi -->
             <?php if ($errorMessage !== ''): ?>
             <div class="mb-6 p-4 rounded-xl bg-error-container text-on-error-container border border-error/20 flex items-start gap-3">
                 <span class="material-symbols-outlined text-[22px] text-error shrink-0">error</span>
@@ -145,7 +138,6 @@ $toko = get_toko_info();
             <?php endif; ?>
 
             <form method="POST" action="login.php" class="space-y-5">
-                <!-- Username / Email -->
                 <div>
                     <label for="username" class="block font-label-md text-label-md text-on-surface font-semibold mb-1.5">
                         Nama Pengguna atau Email
@@ -158,7 +150,6 @@ $toko = get_toko_info();
                     </div>
                 </div>
 
-                <!-- Password -->
                 <div>
                     <label for="password" class="block font-label-md text-label-md text-on-surface font-semibold mb-1.5">
                         Kata Sandi
@@ -174,7 +165,6 @@ $toko = get_toko_info();
                     </div>
                 </div>
 
-                <!-- Remember Me -->
                 <div class="flex items-center justify-between">
                     <label class="flex items-center gap-2 cursor-pointer select-none">
                         <input type="checkbox" name="remember" class="w-4 h-4 rounded text-primary focus:ring-primary border-outline-variant cursor-pointer">
@@ -183,14 +173,12 @@ $toko = get_toko_info();
                     <span class="text-body-sm text-outline">Terminal Kasir Resmi</span>
                 </div>
 
-                <!-- Submit Button -->
                 <button type="submit" id="btnSubmit" class="w-full py-3 px-space-md rounded-xl bg-primary hover:bg-secondary text-on-primary font-headline-sm text-headline-sm shadow-md transition-all active:scale-[0.99] flex items-center justify-center gap-2">
                     <span class="material-symbols-outlined text-[20px]">login</span>
                     <span>Masuk ke Sistem</span>
                 </button>
             </form>
 
-            <!-- Quick Demo Account Pills -->
             <div class="mt-8 pt-6 border-t border-outline-variant/30">
                 <span class="font-label-sm text-label-sm text-outline uppercase tracking-wider block mb-2 font-semibold">Akun Demonstrasi Cepat:</span>
                 <div class="flex flex-wrap gap-2">
@@ -215,7 +203,6 @@ $toko = get_toko_info();
 </div>
 
 <script>
-    // Toggle password visibility
     const btnToggle = document.getElementById('btnTogglePassword');
     const pwdInput = document.getElementById('password');
     const pwdIcon = document.getElementById('iconTogglePassword');
@@ -230,7 +217,6 @@ $toko = get_toko_info();
         }
     });
 
-    // Quick fill helper
     function fillAccount(username, password) {
         document.getElementById('username').value = username;
         document.getElementById('password').value = password;
