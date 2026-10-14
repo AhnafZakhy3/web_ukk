@@ -179,19 +179,6 @@ $toko = get_toko_info();
                 </button>
             </form>
 
-            <div class="mt-8 pt-6 border-t border-outline-variant/30">
-                <span class="font-label-sm text-label-sm text-outline uppercase tracking-wider block mb-2 font-semibold">Akun Demonstrasi Cepat:</span>
-                <div class="flex flex-wrap gap-2">
-                    <button type="button" onclick="fillAccount('budisantoso', 'password123')" class="px-3 py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface font-label-sm flex items-center gap-1.5 transition-colors">
-                        <span class="material-symbols-outlined text-[16px] text-primary">shield_person</span>
-                        <span>Administrator: <strong>budisantoso</strong></span>
-                    </button>
-                    <button type="button" onclick="fillAccount('sitikasir1', 'password123')" class="px-3 py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface font-label-sm flex items-center gap-1.5 transition-colors">
-                        <span class="material-symbols-outlined text-[16px] text-tertiary">point_of_sale</span>
-                        <span>Kasir: <strong>sitikasir1</strong></span>
-                    </button>
-                </div>
-            </div>
         </div>
 
         <div class="mt-8 pt-4 text-center">
