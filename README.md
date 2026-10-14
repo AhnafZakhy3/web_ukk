@@ -31,11 +31,7 @@ Aplikasi ini memenuhi seluruh indikator kelulusan **Uji Kompetensi Keahlian (UKK
 
 ### ⚡ 1. Terminal Kasir Berkecepatan Tinggi
 - **Pencarian Cepat & Barcode Scanning:** Cari nama produk, kode SKU, atau pindai barcode produk secara instan.
-- **Navigasi Cepat Papan Ketik (Keyboard Shortcuts):**
-  - <kbd>F1</kbd>: Fokus cepat ke kotak pencarian barang / scan barcode.
-  - <kbd>F2</kbd>: Buka dialog modal pembayaran belanja.
-  - <kbd>F9</kbd>: Cetak slip struk belanja kasir.
-  - <kbd>Esc</kbd>: Tutup modal atau batalkan transaksi untuk pelanggan baru.
+- **Pintasan Cepat Antarmuka:** Tombol pembatalan/penutup modal instan (<kbd>Esc</kbd>) dan toggle bilah samping (<kbd>Ctrl+B</kbd>).
 - **Pilihan Denominasi Cepat (Quick Cash):** Tombol kalkulasi uang pas, Rp20.000, Rp50.000, Rp100.000 dengan kalkulator kembalian otomatis.
 - **Multimetode Pembayaran:** Mendukung Uang Tunai (*Cash*), QRIS Dinamis, Kartu Debit EDC Bank, dan Transfer Rekening.
 

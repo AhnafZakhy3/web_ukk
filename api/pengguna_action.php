@@ -1,7 +1,6 @@
 <?php
-/**
- * NusaPOS - API Pengguna & Otoritas Action
- */
+// kode buat handle pengguna sama otorisasi
+// bismilah gada vuln
 
 declare(strict_types=1);
 
@@ -23,23 +22,16 @@ if (!validate_csrf($csrfToken)) {
     header("Location: {$redirect}");
     exit;
 }
-
-/**
- * Helper untuk menangani unggahan berkas avatar profil dari perangkat atau fallback ke URL
- */
+// upload foto profil
 function handle_avatar_upload(?array $file, ?string $urlInput, ?string $currentAvatar = null, bool $removeAvatar = false): ?string {
     if ($removeAvatar) {
         return null;
     }
-
-    // 1. Cek berkas upload dari perangkat
     if ($file && isset($file['error']) && $file['error'] === UPLOAD_ERR_OK && $file['size'] > 0) {
-        // Batas maksimal ukuran 3MB
         if ($file['size'] > 3 * 1024 * 1024) {
             throw new Exception("Ukuran berkas foto profil terlalu besar. Maksimal 3MB.");
         }
 
-        // Validasi tipe MIME aktual berkas
         $finfo = new finfo(FILEINFO_MIME_TYPE);
         $mime = $finfo->file($file['tmp_name']);
         $allowedMimes = [
@@ -69,18 +61,17 @@ function handle_avatar_upload(?array $file, ?string $urlInput, ?string $currentA
         return 'public/uploads/avatars/' . $filename;
     }
 
-    // 2. Jika ada URL teks yang diisi
     $trimmedUrl = trim($urlInput ?? '');
     if ($trimmedUrl !== '') {
         return $trimmedUrl;
     }
 
-    // 3. Fallback ke avatar lama
     return $currentAvatar;
 }
 
+
 try {
-    // Aksi pembaruan profil mandiri (dapat dilakukan oleh kasir maupun admin)
+    // buat update profil sendiri
     if ($action === 'update_my_profile') {
         $userId      = (int)$user['id'];
         $namaLengkap = trim($_POST['nama_lengkap'] ?? '');
@@ -99,7 +90,7 @@ try {
         $stmt = $db->prepare("UPDATE users SET nama_lengkap = ?, avatar = ? WHERE id = ?");
         $stmt->execute([$namaLengkap, $avatar, $userId]);
 
-        // Perbarui sesi aktif
+        // update sesi
         $_SESSION['nusapos_user']['nama_lengkap'] = $namaLengkap;
         $_SESSION['nusapos_user']['avatar'] = $avatar;
 
@@ -109,9 +100,8 @@ try {
         exit;
     }
 
-    // Seluruh aksi manajemen akun lainnya mewajibkan hak Administrator
+    // buat management akun sama admin only  
     $currentUser = require_admin();
-
     if ($action === 'add') {
         $namaLengkap = trim($_POST['nama_lengkap'] ?? '');
         $username    = trim($_POST['username'] ?? '');
@@ -125,14 +115,12 @@ try {
             throw new Exception("Seluruh kolom wajib diisi.");
         }
 
-        // Cek duplikasi username / email
         $stmtCheck = $db->prepare("SELECT id FROM users WHERE username = ? OR email = ?");
         $stmtCheck->execute([$username, $email]);
         if ($stmtCheck->fetch()) {
             throw new Exception("Nama pengguna atau email sudah terdaftar dalam sistem.");
         }
 
-        // Proses unggah foto profil
         $avatar = handle_avatar_upload($_FILES['avatar_file'] ?? null, $_POST['avatar'] ?? null, null, false);
 
         $hashPassword = password_hash($password, PASSWORD_BCRYPT);
@@ -160,7 +148,7 @@ try {
             throw new Exception("Data pengguna tidak lengkap.");
         }
 
-        // Cek jika mengubah role atau status admin terakhir
+        // ngecek misal tinggal admin tinggal 1 gabisa di hapus atau di ubah rolenya
         if ($role === 'kasir' || $status === 'nonaktif') {
             $stmtCountAdmin = $db->prepare("SELECT COUNT(*) FROM users WHERE role = 'admin' AND status = 'aktif' AND id != ?");
             $stmtCountAdmin->execute([$id]);
@@ -169,19 +157,16 @@ try {
             }
         }
 
-        // Cek duplikasi username / email pengguna lain
+        // ngecek duplikat
         $stmtCheck = $db->prepare("SELECT id FROM users WHERE (username = ? OR email = ?) AND id != ?");
         $stmtCheck->execute([$username, $email, $id]);
         if ($stmtCheck->fetch()) {
             throw new Exception("Nama pengguna atau email sudah digunakan oleh akun lain.");
         }
 
-        // Ambil avatar lama untuk fallback
         $stmtCurr = $db->prepare("SELECT avatar FROM users WHERE id = ?");
         $stmtCurr->execute([$id]);
         $currentAvatar = $stmtCurr->fetchColumn() ?: null;
-
-        // Proses unggah foto profil baru atau pertahankan lama
         $avatar = handle_avatar_upload($_FILES['avatar_file'] ?? null, $_POST['avatar'] ?? null, $currentAvatar, $removeImg);
 
         $stmt = $db->prepare("
@@ -192,7 +177,7 @@ try {
         ");
         $stmt->execute([$username, $email, $namaLengkap, $role, $cabang, $status, $avatar, $id]);
 
-        // Jika mengedit akun diri sendiri, perbarui data sesi
+        // kalo mengedit akun diri sendiri
         if ($id === (int)$currentUser['id']) {
             $_SESSION['nusapos_user']['nama_lengkap'] = $namaLengkap;
             $_SESSION['nusapos_user']['username'] = $username;

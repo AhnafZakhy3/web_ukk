@@ -1,7 +1,5 @@
 <?php
-/**
- * NusaPOS - API Produk Action (CRUD, Toggle Status, Batch)
- */
+// buat product action sama crud
 
 declare(strict_types=1);
 
@@ -30,14 +28,11 @@ function handle_product_image_upload(?array $file, ?string $urlInput, ?string $c
         return null;
     }
 
-    // 1. Cek berkas upload dari perangkat
     if ($file && isset($file['error']) && $file['error'] === UPLOAD_ERR_OK && $file['size'] > 0) {
-        // Batas maksimal ukuran 3MB
         if ($file['size'] > 3 * 1024 * 1024) {
             throw new Exception("Ukuran berkas gambar terlalu besar. Maksimal 3MB.");
         }
 
-        // Validasi tipe MIME aktual berkas
         $finfo = new finfo(FILEINFO_MIME_TYPE);
         $mime = $finfo->file($file['tmp_name']);
         $allowedMimes = [
@@ -67,13 +62,11 @@ function handle_product_image_upload(?array $file, ?string $urlInput, ?string $c
         return 'public/uploads/produk/' . $filename;
     }
 
-    // 2. Jika ada URL teks yang diisi
     $trimmedUrl = trim($urlInput ?? '');
     if ($trimmedUrl !== '') {
         return $trimmedUrl;
     }
 
-    // 3. Fallback ke gambar yang sudah ada (mode edit)
     return $currentImage;
 }
 
@@ -94,14 +87,12 @@ try {
             throw new Exception("Nama produk, SKU, dan Kategori wajib diisi.");
         }
 
-        // Cek duplikat SKU
         $stmtCheck = $db->prepare("SELECT id FROM produk WHERE sku = ?");
         $stmtCheck->execute([$sku]);
         if ($stmtCheck->fetch()) {
             throw new Exception("Kode SKU '{$sku}' sudah digunakan oleh produk lain.");
         }
 
-        // Proses gambar (file unggahan atau URL)
         $gambar = handle_product_image_upload($_FILES['gambar_file'] ?? null, $_POST['gambar'] ?? null, null, false);
 
         $stmt = $db->prepare("
@@ -149,19 +140,15 @@ try {
             throw new Exception("Data produk tidak lengkap untuk diperbarui.");
         }
 
-        // Cek duplikat SKU selain produk ini
         $stmtCheck = $db->prepare("SELECT id FROM produk WHERE sku = ? AND id != ?");
         $stmtCheck->execute([$sku, $id]);
         if ($stmtCheck->fetch()) {
             throw new Exception("Kode SKU '{$sku}' sudah digunakan oleh produk lain.");
         }
 
-        // Ambil data gambar saat ini untuk fallback
         $stmtCurr = $db->prepare("SELECT gambar FROM produk WHERE id = ?");
         $stmtCurr->execute([$id]);
         $currentImg = $stmtCurr->fetchColumn() ?: null;
-
-        // Proses gambar (file unggahan, input URL baru, atau pertahankan lama)
         $gambar = handle_product_image_upload($_FILES['gambar_file'] ?? null, $_POST['gambar'] ?? null, $currentImg, $removeImg);
 
         $stmt = $db->prepare("
@@ -219,13 +206,11 @@ try {
         $id = (int)($_POST['id'] ?? $_GET['id'] ?? 0);
         if ($id <= 0) throw new Exception("ID produk tidak valid.");
 
-        // Cek apakah produk memiliki riwayat transaksi
         $stmtCheck = $db->prepare("SELECT COUNT(*) FROM detail_transaksi WHERE produk_id = ?");
         $stmtCheck->execute([$id]);
         $trxCount = (int)$stmtCheck->fetchColumn();
 
         if ($trxCount > 0) {
-            // Jika ada riwayat, ubah status ke nonaktif agar data laporan akuntansi tetap konsisten
             $db->prepare("UPDATE produk SET status = 'nonaktif' WHERE id = ?")->execute([$id]);
             $_SESSION['flash_success'] = "Produk telah dinonaktifkan dari katalog karena memiliki riwayat transaksi.";
         } else {

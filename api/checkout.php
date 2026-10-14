@@ -1,7 +1,7 @@
 <?php
-/**
- * NusaPOS - API Endpoint Checkout Transaksi (Atomik & Aman)
- */
+
+//   api endpoint checkout cransaksi 
+
 
 declare(strict_types=1);
 
@@ -44,10 +44,9 @@ if (!in_array($metodeBayar, ['tunai', 'qris', 'debit', 'transfer'], true)) {
 $db = get_db();
 
 try {
-    // Mulai Database Transaction Atomik
-    $db->beginTransaction();
 
-    // 1. Validasi produk dan ketersediaan stok
+    $db->beginTransaction();
+    // buat validasi produk sama stok
     $productIds = array_map(fn($item) => (int)$item['produk_id'], $items);
     if (empty($productIds)) {
         throw new Exception("Tidak ada produk dalam keranjang.");
@@ -96,7 +95,6 @@ try {
         ];
     }
 
-    // 2. Hitung PPN 11% & Total Akhir
     $ppn = round($subtotal * 0.11);
     $totalAkhir = max(0, $subtotal + $ppn - $diskon);
 
@@ -106,14 +104,13 @@ try {
 
     $kembalian = ($metodeBayar === 'tunai') ? max(0, $nominalBayar - $totalAkhir) : 0.0;
 
-    // 3. Generate Nomor Faktur Unik: TRX-YYYYMMDD-XXXX
+    // mbuat no invoice struk
     $today = date('Ymd');
     $stmtSeq = $db->prepare("SELECT COUNT(*) FROM transaksi WHERE no_invoice LIKE ?");
     $stmtSeq->execute(["TRX-{$today}-%"]);
     $seq = (int)$stmtSeq->fetchColumn() + 1;
     $noInvoice = sprintf("TRX-%s-%04d", $today, $seq);
 
-    // 4. Simpan ke Tabel Transaksi
     $stmtInsertTrx = $db->prepare("
         INSERT INTO transaksi (
             no_invoice, user_id, pelanggan, subtotal, pajak_ppn, diskon, 
@@ -139,7 +136,6 @@ try {
     ]);
     $transaksiId = (int)$db->lastInsertId();
 
-    // 5. Simpan Detail Transaksi & Kurangi Stok Produk
     $stmtInsertDetail = $db->prepare("
         INSERT INTO detail_transaksi (transaksi_id, produk_id, nama_produk, harga_satuan, jumlah, subtotal)
         VALUES (:transaksi_id, :produk_id, :nama_produk, :harga_satuan, :jumlah, :subtotal)
@@ -171,7 +167,6 @@ try {
         ];
     }
 
-    // Komit transaksi
     $db->commit();
 
     $toko = get_toko_info();

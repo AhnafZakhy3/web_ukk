@@ -1,12 +1,6 @@
--- ========================================================
--- NusaPOS Web Application - Database Schema
--- Database: nusapos_db
--- ========================================================
-
 CREATE DATABASE IF NOT EXISTS nusapos_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE nusapos_db;
 
--- 1. Tabel Users (Administrator & Kasir)
 CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(50) NOT NULL UNIQUE,
@@ -22,7 +16,6 @@ CREATE TABLE IF NOT EXISTS users (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 2. Tabel Kategori Produk
 CREATE TABLE IF NOT EXISTS kategori (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nama_kategori VARCHAR(100) NOT NULL,
@@ -33,7 +26,6 @@ CREATE TABLE IF NOT EXISTS kategori (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 3. Tabel Satuan Unit
 CREATE TABLE IF NOT EXISTS satuan (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nama_satuan VARCHAR(50) NOT NULL,
@@ -41,7 +33,6 @@ CREATE TABLE IF NOT EXISTS satuan (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 4. Tabel Katalog Produk
 CREATE TABLE IF NOT EXISTS produk (
     id INT AUTO_INCREMENT PRIMARY KEY,
     kategori_id INT NOT NULL,
@@ -65,7 +56,6 @@ CREATE TABLE IF NOT EXISTS produk (
     CONSTRAINT fk_produk_satuan FOREIGN KEY (satuan_id) REFERENCES satuan(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 5. Tabel Transaksi Penjualan
 CREATE TABLE IF NOT EXISTS transaksi (
     id INT AUTO_INCREMENT PRIMARY KEY,
     no_invoice VARCHAR(50) NOT NULL UNIQUE,
@@ -86,7 +76,6 @@ CREATE TABLE IF NOT EXISTS transaksi (
     CONSTRAINT fk_transaksi_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 6. Tabel Detail Item Transaksi
 CREATE TABLE IF NOT EXISTS detail_transaksi (
     id INT AUTO_INCREMENT PRIMARY KEY,
     transaksi_id INT NOT NULL,
@@ -101,7 +90,6 @@ CREATE TABLE IF NOT EXISTS detail_transaksi (
     CONSTRAINT fk_detail_produk FOREIGN KEY (produk_id) REFERENCES produk(id) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 7. Tabel Pengaturan Toko
 CREATE TABLE IF NOT EXISTS pengaturan (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nama_toko VARCHAR(100) NOT NULL DEFAULT 'NusaPOS Retail Mart',
@@ -111,3 +99,5 @@ CREATE TABLE IF NOT EXISTS pengaturan (
     persen_ppn DECIMAL(5,2) NOT NULL DEFAULT 11.00,
     printer_footer TEXT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- bismilah optimal

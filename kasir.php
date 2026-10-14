@@ -52,11 +52,10 @@ require_once __DIR__ . '/templates/topbar.php';
                     <div class="flex items-center gap-space-sm">
                         <div class="relative flex-1">
                             <span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-outline text-[20px]">search</span>
-                            <input type="text" id="search-input" placeholder="Cari nama produk, SKU, atau barcode... (F1 / Ctrl+F)"
-                                class="w-full pl-11 pr-24 py-2.5 rounded-xl bg-surface-container-low text-on-surface placeholder:text-outline font-body-md focus:outline-none focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary border border-outline-variant/30 transition-all">
-                            <span class="absolute right-3 top-1/2 -translate-y-1/2 font-label-sm text-label-sm bg-surface-container text-on-surface-variant px-2 py-0.5 rounded font-mono">F1</span>
+                            <input type="text" id="search-input" placeholder="Cari nama produk, SKU, atau barcode..."
+                                class="w-full pl-11 pr-4 py-2.5 rounded-xl bg-surface-container-low text-on-surface placeholder:text-outline font-body-md focus:outline-none focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary border border-outline-variant/30 transition-all">
                         </div>
-                        <button type="button" onclick="document.getElementById('search-input').focus(); showToast('Arahkan scanner ke barcode produk', 'info');" class="flex items-center gap-2 bg-primary text-on-primary px-4 py-2.5 rounded-xl font-label-lg shadow-sm hover:bg-secondary transition-all active:scale-[0.98] shrink-0">
+                        <button type="button" onclick="showToast('fitur ini blom jadi nanti ajah bikinnya', 'info');" class="flex items-center gap-2 bg-primary text-on-primary px-4 py-2.5 rounded-xl font-label-lg shadow-sm hover:bg-secondary transition-all active:scale-[0.98] shrink-0 cursor-pointer">
                             <span class="material-symbols-outlined text-[20px]">barcode_scanner</span>
                             <span class="hidden sm:inline">Scan Barcode</span>
                         </button>
@@ -228,7 +227,7 @@ require_once __DIR__ . '/templates/topbar.php';
                         <button type="button" id="btn-checkout" onclick="openPaymentModal()" disabled
                             class="w-full py-3 px-space-md rounded-xl bg-primary hover:bg-secondary disabled:bg-surface-container disabled:text-outline disabled:cursor-not-allowed text-on-primary font-headline-sm text-base shadow-md transition-all active:scale-[0.99] flex items-center justify-center gap-2">
                             <span class="material-symbols-outlined text-[20px]">payments</span>
-                            <span>Bayar Sekarang (F2)</span>
+                            <span>Bayar Sekarang</span>
                         </button>
                     </div>
 
@@ -417,7 +416,7 @@ require_once __DIR__ . '/templates/topbar.php';
             <div class="mt-space-lg space-y-2">
                 <button type="button" onclick="printReceipt()" class="w-full py-3 px-space-md rounded-xl bg-primary hover:bg-secondary text-on-primary font-headline-sm text-sm flex items-center justify-center gap-2 shadow-md transition-all active:scale-[0.99]">
                     <span class="material-symbols-outlined text-[20px]">print</span>
-                    <span>Cetak Struk Thermal (F9)</span>
+                    <span>Cetak Struk Thermal</span>
                 </button>
                 <button type="button" onclick="resetOrder()" class="w-full py-2.5 px-space-md rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface font-label-lg text-sm flex items-center justify-center gap-2 transition-all">
                     <span class="material-symbols-outlined text-[20px]">add_shopping_cart</span>

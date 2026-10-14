@@ -1,7 +1,5 @@
 <?php
-/**
- * NusaPOS - API Kategori & Satuan Action
- */
+// kode buat kategori sama satuan
 
 declare(strict_types=1);
 
@@ -57,7 +55,7 @@ try {
             throw new Exception("Data kategori tidak lengkap.");
         }
 
-        // Cek duplikat kode
+        // buat ngecek duplikat
         $stmtCheck = $db->prepare("SELECT id FROM kategori WHERE kode = ? AND id != ?");
         $stmtCheck->execute([$kode, $id]);
         if ($stmtCheck->fetch()) {
@@ -75,7 +73,7 @@ try {
         $id = (int)($_POST['id'] ?? $_GET['id'] ?? 0);
         if ($id <= 0) throw new Exception("ID kategori tidak valid.");
 
-        // Cek apakah ada produk yang terikat ke kategori ini
+        // ngecek produk yang terikatr ke kategori
         $stmtCheck = $db->prepare("SELECT COUNT(*) FROM produk WHERE kategori_id = ?");
         $stmtCheck->execute([$id]);
         $prodCount = (int)$stmtCheck->fetchColumn();
@@ -110,7 +108,6 @@ try {
         $id = (int)($_POST['id'] ?? $_GET['id'] ?? 0);
         if ($id <= 0) throw new Exception("ID satuan tidak valid.");
 
-        // Set null produk yang menggunakan satuan ini
         $db->prepare("UPDATE produk SET satuan_id = NULL WHERE satuan_id = ?")->execute([$id]);
         $db->prepare("DELETE FROM satuan WHERE id = ?")->execute([$id]);
 

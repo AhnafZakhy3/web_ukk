@@ -226,9 +226,8 @@ require_once __DIR__ . '/templates/topbar.php';
                 <div class="relative flex-1">
                     <span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-outline text-[20px]">search</span>
                     <input type="text" name="q" id="product-search-input" value="<?= htmlspecialchars($searchQuery) ?>"
-                        placeholder="Cari berdasarkan Nama Produk, SKU, atau Barcode... (F1)"
-                        class="w-full h-11 pl-11 pr-24 rounded-xl bg-surface-container-low text-on-surface placeholder:text-outline font-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary border border-outline-variant/30 transition-all">
-                    <span class="absolute right-3 top-1/2 -translate-y-1/2 font-label-sm text-xs bg-surface-container px-2 py-0.5 rounded text-outline font-mono">F1</span>
+                        placeholder="Cari berdasarkan Nama Produk, SKU, atau Barcode..."
+                        class="w-full h-11 pl-11 pr-4 rounded-xl bg-surface-container-low text-on-surface placeholder:text-outline font-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary border border-outline-variant/30 transition-all">
                 </div>
 
                 <!-- Filters -->

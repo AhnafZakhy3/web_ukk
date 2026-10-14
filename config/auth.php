@@ -1,15 +1,12 @@
 <?php
-/**
- * NusaPOS - Authentication, Session & Access Control
- */
+// buat sesi sama login
 
 declare(strict_types=1);
 
 require_once __DIR__ . '/database.php';
-
+// sesi
 function init_session(): void {
     if (session_status() === PHP_SESSION_NONE) {
-        // Parameter sesi yang aman
         session_set_cookie_params([
             'lifetime' => 0,
             'path' => '/',
@@ -65,13 +62,11 @@ function login_user(array $user): void {
         'avatar'       => $user['avatar'] ?? null,
     ];
 
-    // Perbarui waktu login terakhir di database
     try {
         $db = get_db();
         $stmt = $db->prepare("UPDATE users SET last_login = NOW() WHERE id = ?");
         $stmt->execute([$user['id']]);
     } catch (Exception $e) {
-        // silent fail
     }
 }
 

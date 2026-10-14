@@ -22,14 +22,7 @@ $avatarUrl = $user['avatar'] ?: 'https://ui-avatars.com/api/?name=' . urlencode(
         <button type="button" onclick="toggleSidebarCollapse()" id="desktop-sidebar-toggle" aria-label="Sembunyikan / Tampilkan Sidebar" title="Sembunyikan / Tampilkan Sidebar (Ctrl+B)" class="hidden md:flex p-2 rounded-xl text-on-surface hover:bg-surface-container transition-colors items-center justify-center cursor-pointer">
             <span class="material-symbols-outlined text-[24px]" id="desktop-sidebar-toggle-icon">menu_open</span>
         </button>
-        <div class="hidden xl:flex items-center gap-2 bg-surface-container-low px-space-md py-1.5 rounded-lg border border-outline-variant/30">
-            <span class="material-symbols-outlined text-[18px] text-outline">keyboard</span>
-            <span class="font-label-sm text-label-sm text-on-surface-variant">
-                <span class="font-semibold text-primary">F1:</span> Cari Produk &nbsp;|&nbsp; 
-                <span class="font-semibold text-primary">F2:</span> Bayar &nbsp;|&nbsp; 
-                <span class="font-semibold text-primary">F9:</span> Cetak Struk
-            </span>
-        </div>
+
         <div class="flex items-center gap-2 px-space-sm py-1 bg-on-tertiary-container/30 border border-tertiary-fixed rounded-full">
             <span class="w-2 h-2 rounded-full bg-tertiary animate-pulse"></span>
             <span class="font-label-sm text-label-sm text-tertiary font-semibold">Online • Mesin Kasir #01</span>

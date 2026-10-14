@@ -1,13 +1,9 @@
-/**
- * NusaPOS - General Client Utilities
- */
+// javascript stuff, intine buat toggle toggle sidebar sama input inputan, dan lain lain. maybe 
 
-// Format Rupiah
 function formatRupiah(number) {
   return 'Rp' + new Intl.NumberFormat('id-ID').format(number);
 }
 
-// Toast Notification
 function showToast(message, type = 'success') {
   let toastContainer = document.getElementById('toast-container');
   if (!toastContainer) {
@@ -31,19 +27,16 @@ function showToast(message, type = 'success') {
 
   toastContainer.appendChild(toast);
 
-  // Animate in
   setTimeout(() => {
     toast.classList.remove('translate-y-2', 'opacity-0');
   }, 10);
 
-  // Auto remove
   setTimeout(() => {
     toast.classList.add('opacity-0', 'translate-x-4');
     setTimeout(() => toast.remove(), 300);
   }, 3500);
 }
 
-// Global modal helpers
 function openModal(modalId) {
   const el = document.getElementById(modalId);
   if (el) {
@@ -60,7 +53,6 @@ function closeModal(modalId) {
   }
 }
 
-// Mobile sidebar toggle
 function toggleSidebar(open) {
   const sidebar = document.getElementById('app-sidebar');
   const backdrop = document.getElementById('sidebar-backdrop');
@@ -74,7 +66,6 @@ function toggleSidebar(open) {
   }
 }
 
-// Theme Toggle (Dark & Light Mode)
 function toggleTheme() {
   const isDark = document.documentElement.classList.toggle('dark');
   localStorage.setItem('nusapos_theme', isDark ? 'dark' : 'light');
@@ -98,7 +89,6 @@ function updateThemeIcons() {
   });
 }
 
-// Desktop sidebar collapse toggle
 function toggleSidebarCollapse() {
   const isCollapsed = document.documentElement.classList.toggle('sidebar-collapsed');
   localStorage.setItem('nusapos_sidebar_collapsed', isCollapsed ? 'true' : 'false');
@@ -114,7 +104,6 @@ function updateSidebarToggleIcon() {
   }
 }
 
-// Global shortcut handler (Ctrl+B / Cmd+B for sidebar toggle)
 document.addEventListener('keydown', (e) => {
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
     const target = e.target;

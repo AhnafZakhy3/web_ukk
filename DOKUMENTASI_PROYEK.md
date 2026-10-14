@@ -87,7 +87,7 @@ Dalam operasional perdagangan ritel konvensional, pencatatan transaksi manual me
 
 ### 1.3 Solusi Digitalisasi Transaksi NusaPOS
 NusaPOS dirancang sebagai solusi terpadu berbasis web yang responsif, berkinerja tinggi, dan aman. Sistem mengintegrasikan:
-- **Terminal Kasir Responsif:** Dilengkapi tombol pencarian instan, filter kategori, navigasi cepat papan ketik (*keyboard shortcuts* F1, F2, F9), kalkulasi otomatis PPN 11%, dan kalkulator uang kembalian instan (*quick cash pills*).
+- **Terminal Kasir Responsif:** Dilengkapi tombol pencarian instan, filter kategori, navigasi responsif, kalkulasi otomatis PPN 11%, dan kalkulator uang kembalian instan (*quick cash pills*).
 - **Integritas Transaksi Atomik:** Memanfaatkan transaksi basis data ACID (`BEGIN TRANSACTION`, `COMMIT`, `ROLLBACK`) dengan penguncian baris (`FOR UPDATE`) untuk memastikan tidak terjadi *race condition* atau *overselling* stok barang.
 - **Pratinjau Struk Thermal 80mm:** Mendukung pencetakan fisik maupun simulasi struk kasir thermal 80mm dengan layout terstandarisasi industri ritel.
 - **Kendali Akses Peran (RBAC):** Memisahkan secara ketat batas kewenangan antara Administrator (pemegang kendali penuh katalog, kategori, akun pengguna, dan laporan laba) dan Kasir (terbatas pada operasional transaksi penjualan dan cetak struk).
@@ -178,18 +178,18 @@ Sistem menerapkan kendali akses berbasis peran (RBAC) dengan 2 tingkat otoritas 
 
 ### 3.2 Modul Terminal Kasir (Point of Sale)
 Modul utama untuk kecepatan operasional kasir di meja kasir ritel:
-- **Pencarian Cepat & Barcode Scanning:** Input pencarian mendukung pencarian *fuzzy* nama barang, SKU, dan barcode scanner langsung dengan tombol pintas `F1`.
+- **Pencarian Cepat & Input Barcode:** Input pencarian mendukung pencarian *fuzzy* nama barang, SKU, dan barcode produk secara instan.
 - **Kategori Filter Tab:** Tab interaktif kategori produk (*Semua, Minuman, Makanan, Sembako, Rumah Tangga, Tembakau, Kesehatan*).
 - **Keranjang Belanja Real-Time:** Penambahan kuantitas produk dinamis, tombol *increment* (+), *decrement* (-), serta tombol hapus baris.
 - **Isolasi Scroll Ergonomis:** Panel terminal kasir dan grid katalog produk memiliki scrolling independen tanpa gangguan *scroll-chaining*.
 - **Toggle Sidebar Lebar Penuh:** Tombol collapse sidebar (`Ctrl+B`) untuk memaksimalkan area pandang monitor kasir.
 - **Kalkulasi Pajak & Diskon:** PPN 11% dan diskon transaksi dikalkulasi otomatis secara matematis dan transparan.
-- **Modal Pembayaran Interaktif:** Tombol pintas `F2` membuka modal pembayaran dengan 4 pilihan metode:
+- **Modal Pembayaran Interaktif:** Tombol "Bayar Sekarang" membuka modal pembayaran dengan 4 pilihan metode:
   1. *Tunai (Cash):* Dilengkapi tombol uang pas dan pecahan cepat (*Rp20.000, Rp50.000, Rp100.000*) serta deteksi uang kurang.
   2. *QRIS Dinamis:* Tampilan antarmuka QRIS simulasi dengan nilai transaksi terkunci otomatis.
   3. *Kartu Debit:* Antarmuka panduan gesek/insert mesin EDC bank rekanan.
   4. *Transfer Bank:* Informasi rekening virtual account toko.
-- **Slip Struk Thermal 80mm:** Pratinjau slip struk thermal berstandar ritel dengan tombol cetak langsung (`F9` / `Ctrl+P`).
+- **Slip Struk Thermal 80mm:** Pratinjau slip struk thermal berstandar ritel dengan tombol cetak langsung (*browser print dialog*).
 
 ### 3.3 Modul Inventori & Manajemen Stok
 Modul pengelolaan ketersediaan barang dan struktur departemen:
@@ -246,7 +246,7 @@ flowchart TD
     MoreItems -- Ya --> InputItem
     MoreItems -- Tidak --> ReviewCart["Tinjau Subtotal, PPN 11%, dan Diskon"]
     
-    ReviewCart --> PressPay["Tekan Tombol Bayar / Shortcut F2"]
+    ReviewCart --> PressPay["Tekan Tombol Bayar Sekarang"]
     PressPay --> OpenModal[Buka Modal Pilihan Pembayaran]
     OpenModal --> SelectMethod{Pilih Metode Pembayaran}
     
@@ -267,7 +267,7 @@ flowchart TD
     DBProc -- Berhasil --> CommitTrx[Commit Transaksi & Kurangi Stok]
     
     CommitTrx --> ShowSuccess[Buka Modal Transaksi Sukses]
-    ShowSuccess --> PrintReceipt["Cetak Struk Thermal 80mm / F9"]
+    ShowSuccess --> PrintReceipt["Cetak Struk Thermal 80mm"]
     PrintReceipt --> ResetPOS[Reset Keranjang Belanja]
     ResetPOS --> Selesai([Siap Transaksi Berikutnya])
 ```
@@ -672,8 +672,7 @@ flowchart TD
     AturQty --> HitungOtomatis["Sistem Mengkalkulasi Subtotal, PPN 11%, dan Diskon"]
     HitungOtomatis --> TambahLagi{Tambah Item Lain?}
     TambahLagi -- Ya --> CariProduk
-    TambahLagi -- Tidak --> TekanBayar["Tekan Tombol Bayar / Tekan F2"]
-    TekanBayar --> PilihMetode["Pilih Metode Pembayaran: Tunai / QRIS / Debit / Transfer"]
+    TambahLagi -- Tidak --> TekanBayar["Tekan Tombol Bayar Sekarang"]
     PilihMetode --> CekMetode{Metode Tunai?}
     CekMetode -- Ya --> InputTunai[Kasir Menginputkan Uang Diterima]
     InputTunai --> CekUang{"Nominal >= Total Tagihan?"}
@@ -688,8 +687,8 @@ flowchart TD
     EksekusiAtomik -- Gagal --> TampilkanError["Tampilkan Pesan Kegagalan / Rollback"]
     TampilkanError --> BukaTerminal
     EksekusiAtomik -- Berhasil --> BukaModalSukses[Buka Modal Bukti Transaksi Sukses]
-    BukaModalSukses --> CetakStruk["Tekan F9 / Tombol Cetak Struk Thermal 80mm"]
-    CetakStruk --> TransaksiBaru[Tekan Esc / Tombol Transaksi Baru]
+    BukaModalSukses --> CetakStruk["Tombol Cetak Struk Thermal 80mm"]
+    CetakStruk --> TransaksiBaru[Tombol Transaksi Baru]
     TransaksiBaru --> ResetState[Keranjang Dikosongkan]
     ResetState --> Selesai([Selesai])
 ```
@@ -758,7 +757,7 @@ sequenceDiagram
     participant DB as MySQL Database (PDO)
     participant Printer as Printer Thermal 80mm
 
-    Kasir->>UI: Menambahkan produk ke keranjang & tekan F2 (Bayar)
+    Kasir->>UI: Menambahkan produk ke keranjang & klik Bayar Sekarang
     UI->>Script: openPaymentModal()
     Kasir->>UI: Pilih metode bayar & input nominal uang diterima
     Kasir->>UI: Klik 'Konfirmasi Pembayaran'
@@ -795,8 +794,8 @@ sequenceDiagram
         Script->>UI: Render slip struk pada modal sukses
         UI-->>Kasir: Tampilkan Modal Sukses Transaksi & Pratinjau Struk 80mm
         
-        opt Kasir Mencetak Struk (Tekan F9 / Klik Cetak)
-            Kasir->>UI: Klik Cetak Struk Thermal (F9)
+        opt Kasir Mencetak Struk (Klik Tombol Cetak)
+            Kasir->>UI: Klik Cetak Struk Thermal
             UI->>Script: printReceipt()
             Script->>Printer: Trigger window.print() (Thermal 80mm Styling)
             Printer-->>Kasir: Kertas Struk Tercetak
@@ -1044,7 +1043,7 @@ c:\ahnaf\web_ukk\
 | `config/auth.php` | Core Config | Fungsi autentikasi, pengecekan role `is_admin()`, pembuatan CSRF token, format Rupiah, dan profil toko. |
 | `public/uploads/*` | Static Storage | Direktori penyimpanan berkas gambar yang diunggah pengguna (`avatars/` dan `products/`). |
 | `templates/*.php` | UI Component | Templating modular: header (anti-FOUC), topbar (profil & modal avatar), sidebar (collapse `Ctrl+B`), footer (toast). |
-| `public/js/pos.js` | POS Engine | Logika keranjang belanja, listener shortcut keyboard (F1, F2, F9, Esc), kalkulator kembalian, cetak struk. |
+| `public/js/pos.js` | POS Engine | Logika keranjang belanja, kalkulator kembalian, cetak struk, modal handling (Esc). |
 | `public/js/app.js` | UI Engine | Fungsi toggle tema (Dark/Light), collapse sidebar desktop, notifikasi toast, toggle modal, drawer mobile. |
 | `tests/squad_test.php` | Automation Test | Menguji end-to-end 30 skenario (Auth, RBAC, checkout atomicity, overstock, underpayment, CSRF, CSV). |
 
@@ -1190,11 +1189,9 @@ Pengujian manual (*user acceptance test*) dilakukan secara langsung pada browser
    - Memilih item *Kopi Susu Aren 250ml* (Rp18.000 x 2 = Rp36.000), PPN 11% (Rp3.960), Total: Rp39.960.
    - Mengklik pil uang cepat *Rp50.000*, sistem langsung menampilkan kembalian *Rp10.040*.
    - Konfirmasi berhasil membuka modal slip struk dan stok di katalog berkurang real-time.
-2. **Uji Tombol Pintas Keyboard (*Shortcuts*):**
-   - Penekanan tombol `F1` otomatis memfokuskan kursor pada kotak input pencarian produk.
-   - Penekanan tombol `F2` saat keranjang terisi membuka dialog modal pembayaran.
-   - Penekanan tombol `F9` pada modal sukses memicu dialog pencetakan printer sistem.
+2. **Uji Navigasi Modal & Pintasan Keyboard:**
    - Penekanan tombol `Esc` menutup modal pembayaran atau mereset keranjang untuk transaksi baru.
+   - Penekanan tombol pintas `Ctrl+B` menutup/membuka sidebar secara dinamis.
 3. **Uji Alih Mode Tampilan (Dark/Light Mode & Anti-FOUC):**
    - Pengalihan mode terang ke mode gelap mengubah seluruh token warna permukaan menjadi gelap tanpa kedipan putih (*zero flicker/FOUC*).
    - Pengaturan mode tersimpan di `localStorage` dan bertahan saat halaman direfresh atau berpindah menu.

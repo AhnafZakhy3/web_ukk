@@ -1,7 +1,5 @@
 <?php
-/**
- * NusaPOS - Database Connection Singleton
- */
+// file koneksi database
 
 declare(strict_types=1);
 
@@ -26,7 +24,6 @@ function get_db(): PDO {
         try {
             $pdo = new PDO($dsn, $user, $pass, $options);
         } catch (PDOException $e) {
-            // Menampilkan pesan ramah jika gagal terhubung
             die("Gagal terhubung ke database MySQL NusaPOS: " . htmlspecialchars($e->getMessage()));
         }
     }

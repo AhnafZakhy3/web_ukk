@@ -1,8 +1,5 @@
 <?php
-/**
- * NusaPOS - Export & Import CSV Handler
- */
-
+// kode buat export dan import csv
 declare(strict_types=1);
 
 require_once __DIR__ . '/../config/auth.php';
@@ -13,22 +10,19 @@ $db = get_db();
 $type   = $_GET['type'] ?? '';
 $action = $_GET['action'] ?? '';
 
-// 1. Unduh Template CSV Import Produk
+//template file csv buat import produk
 if ($type === 'template') {
     header('Content-Type: text/csv; charset=utf-8');
     header('Content-Disposition: attachment; filename=template_import_produk_nusapos.csv');
 
     $output = fopen('php://output', 'w');
-    // Header
-    fputcsv($output, ['nama_produk', 'sku', 'barcode', 'kategori_kode', 'harga_beli', 'harga_jual', 'stok', 'min_stok']);
-    // Contoh Baris
+    fputcsv($output, ['nama_produk', 'sku', 'barcode', 'kategori_kode', 'harga_beli', 'harga_jual', 'stok', 'min_stok']); 
     fputcsv($output, ['Kopi Susu Gula Aren 250ml', 'SKU-MNM-099', '899123456789', 'MINUMAN', '10000', '15000', '50', '5']);
-    fputcsv($output, ['Biskuit Cokelat Renyah 100g', 'SKU-MKN-099', '899987654321', 'MAKANAN', '5000', '8000', '30', '5']);
     fclose($output);
     exit;
 }
 
-// 2. Export Master Data Produk ke CSV
+// export data produk ke excel file
 if ($type === 'produk') {
     header('Content-Type: text/csv; charset=utf-8');
     header('Content-Disposition: attachment; filename=katalog_produk_nusapos_' . date('Ymd_His') . '.csv');
@@ -62,7 +56,7 @@ if ($type === 'produk') {
     exit;
 }
 
-// 3. Export Riwayat Transaksi ke CSV
+// export laporan transaksi ke excel file
 if ($type === 'transaksi') {
     header('Content-Type: text/csv; charset=utf-8');
     header('Content-Disposition: attachment; filename=laporan_transaksi_nusapos_' . date('Ymd_His') . '.csv');
@@ -97,7 +91,7 @@ if ($type === 'transaksi') {
     exit;
 }
 
-// 4. Proses Import CSV Produk
+//proses import csv produk
 if ($action === 'import' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!isset($_FILES['csv_file']) || $_FILES['csv_file']['error'] !== UPLOAD_ERR_OK) {
         $_SESSION['flash_error'] = 'Gagal mengunggah berkas CSV.';
@@ -117,7 +111,7 @@ if ($action === 'import' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $insertedCount = 0;
     $skippedCount = 0;
 
-    // Cache kategori
+
     $catMap = [];
     $cats = $db->query("SELECT id, kode FROM kategori")->fetchAll();
     foreach ($cats as $c) {
@@ -148,7 +142,7 @@ if ($action === 'import' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $kategoriId = $catMap[$catKode] ?? $defaultCatId;
 
-            // Skip jika SKU sudah ada
+            // Skip kalo sku sudah ada
             $stmtCheck->execute([$sku]);
             if ($stmtCheck->fetch()) {
                 $skippedCount++;

@@ -1,7 +1,4 @@
-/**
- * NusaPOS - POS Engine Client Script
- * Mengelola keranjang belanja, kalkulasi PPN & diskon, modal pembayaran, dan cetak struk termal.
- */
+// ini buat yang dibagian terminal kasir e
 
 let cart = [];
 const PPN_RATE = 0.11; // 11%
@@ -9,14 +6,13 @@ let discountAmount = 0;
 let currentPaymentMethod = 'tunai';
 let lastCompletedReceipt = null;
 
-// Audio beep for scanning / adding items
 function playBeep() {
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.type = 'sine';
-    osc.frequency.value = 880; // A5 note
+    osc.frequency.value = 880;
     gain.gain.value = 0.1;
     osc.connect(gain);
     gain.connect(ctx.destination);
@@ -25,7 +21,6 @@ function playBeep() {
   } catch (e) {}
 }
 
-// 1. Tambah Produk ke Keranjang
 function addToCart(product) {
   const existing = cart.find(item => item.id === product.id);
   const currentQtyInCart = existing ? existing.qty : 0;
@@ -55,7 +50,6 @@ function addToCart(product) {
   showToast(`"${product.nama_produk}" ditambahkan ke keranjang`, 'success');
 }
 
-// 2. Ubah Kuantitas
 function updateItemQty(productId, delta) {
   const item = cart.find(i => i.id === productId);
   if (!item) return;
@@ -75,14 +69,12 @@ function updateItemQty(productId, delta) {
   renderCart();
 }
 
-// 3. Hapus Item dari Keranjang
 function removeItem(productId) {
   cart = cart.filter(i => i.id !== productId);
   renderCart();
   showToast('Item dihapus dari keranjang', 'info');
 }
 
-// 4. Kosongkan Keranjang
 function confirmClearCart() {
   if (cart.length === 0) return;
   if (confirm('Kosongkan seluruh barang di keranjang belanja?')) {
@@ -93,7 +85,6 @@ function confirmClearCart() {
   }
 }
 
-// 5. Render Keranjang & Hitung Total
 function renderCart() {
   const listEl = document.getElementById('cart-item-list');
   const emptyEl = document.getElementById('cart-empty-state');
@@ -165,7 +156,6 @@ function renderCart() {
   document.getElementById('cart-total').textContent = formatRupiah(total);
 }
 
-// 6. Filter Kategori Produk di Katalog
 function filterCategory(catSlug, btnEl) {
   document.querySelectorAll('.cat-tab').forEach(b => {
     b.className = 'cat-tab px-3.5 py-1.5 rounded-full font-label-md text-label-md whitespace-nowrap transition-colors bg-surface-container-low text-on-surface-variant hover:bg-surface-container border border-outline-variant/30 cursor-pointer';
@@ -185,7 +175,7 @@ function filterCategory(catSlug, btnEl) {
   });
 }
 
-// 7. Live Search Produk & Barcode Enter
+// searching searching barang
 function initSearch() {
   const searchInput = document.getElementById('search-input');
   if (!searchInput) return;
@@ -219,15 +209,11 @@ function initSearch() {
   }
 
   searchInput.addEventListener('input', doSearch);
-
-  // Jika scanner barcode menekan tombol Enter
   searchInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
       e.preventDefault();
       const query = searchInput.value.trim();
       if (!query) return;
-
-      // Cari exact barcode match
       const matchedCard = Array.from(document.querySelectorAll('.product-card')).find(card => {
         const barcode = card.getAttribute('data-barcode') || '';
         const sku = card.getAttribute('data-sku') || '';
@@ -244,7 +230,7 @@ function initSearch() {
   });
 }
 
-// 8. Modal Pembayaran
+// pembayaran
 function openPaymentModal() {
   if (cart.length === 0) {
     showToast('Keranjang masih kosong!', 'error');
@@ -260,7 +246,6 @@ function openPaymentModal() {
   document.getElementById('modal-pay-discount').textContent = '-' + formatRupiah(discountAmount);
   document.getElementById('modal-pay-total').textContent = formatRupiah(total);
 
-  // Set nilai awal uang diterima = total (Uang Pas)
   const cashInput = document.getElementById('cash-tendered-input');
   if (cashInput) {
     cashInput.value = total;
@@ -371,7 +356,6 @@ function validatePaymentCanProceed() {
   }
 }
 
-// 9. Konfirmasi Pembayaran & Simpan ke Backend (AJAX)
 async function confirmPayment() {
   if (cart.length === 0) return;
 
@@ -420,17 +404,14 @@ async function confirmPayment() {
       throw new Error(result.message || 'Gagal memproses transaksi.');
     }
 
-    // Sukses: Tutup modal pembayaran, buka modal sukses
     closePaymentModal();
     lastCompletedReceipt = result.receipt;
     showSuccessModal(result.receipt);
 
-    // Reset keranjang
     cart = [];
     discountAmount = 0;
     renderCart();
 
-    // Perbarui stok produk yang ada di antarmuka katalog secara lokal
     if (result.updated_stocks) {
       result.updated_stocks.forEach(s => {
         const card = document.querySelector(`.product-card[data-id="${s.id}"]`);
@@ -462,7 +443,6 @@ async function confirmPayment() {
   }
 }
 
-// 10. Tampilkan Modal Sukses & Pratinjau Struk
 function showSuccessModal(receipt) {
   document.getElementById('receipt-invoice-no').textContent = receipt.no_invoice;
   document.getElementById('receipt-time').textContent = receipt.tanggal;
@@ -470,8 +450,6 @@ function showSuccessModal(receipt) {
   document.getElementById('receipt-total').textContent = formatRupiah(receipt.total_akhir);
   document.getElementById('receipt-paid').textContent = formatRupiah(receipt.nominal_bayar);
   document.getElementById('receipt-change').textContent = formatRupiah(receipt.kembalian);
-
-  // Thermal Slip Preview
   document.getElementById('slip-toko').textContent = receipt.nama_toko;
   document.getElementById('slip-cabang').textContent = receipt.cabang;
   document.getElementById('slip-alamat').textContent = receipt.alamat || '';
@@ -503,7 +481,7 @@ function showSuccessModal(receipt) {
   openModal('success-modal');
 }
 
-// 11. Cetak Struk (Thermal 80mm Print)
+// cetak struk
 function printReceipt() {
   window.print();
 }
@@ -519,19 +497,7 @@ function resetOrder() {
 
 // Keyboard shortcuts
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'F1') {
-    e.preventDefault();
-    document.getElementById('search-input')?.focus();
-  } else if (e.key === 'F2') {
-    e.preventDefault();
-    openPaymentModal();
-  } else if (e.key === 'F9') {
-    e.preventDefault();
-    const successModal = document.getElementById('success-modal');
-    if (successModal && !successModal.classList.contains('hidden')) {
-      printReceipt();
-    }
-  } else if (e.key === 'Escape') {
+  if (e.key === 'Escape') {
     const paymentModal = document.getElementById('payment-modal');
     const successModal = document.getElementById('success-modal');
     if (paymentModal && !paymentModal.classList.contains('hidden')) {
@@ -542,7 +508,6 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-// Inisialisasi awal saat DOM siap
 document.addEventListener('DOMContentLoaded', () => {
   initSearch();
   renderCart();
